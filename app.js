@@ -274,6 +274,7 @@ async function guardarFormulario(evento) {
   }
 }
 
+
 async function verificarServiceWorker() {
   if (!("serviceWorker" in navigator)) {
     $("serviceworker").textContent =
@@ -282,21 +283,29 @@ async function verificarServiceWorker() {
   }
 
   try {
-    const registro = await navigator.serviceWorker
-      .getRegistration("./");
+    const registro = await navigator.serviceWorker.register(
+      "./sw.js",
+      { scope: "./" }
+    );
 
-    if (registro && registro.active) {
-      $("serviceworker").textContent =
-        "Activo";
-    } else {
-      $("serviceworker").textContent =
-        "Pendiente";
-    }
+    await navigator.serviceWorker.ready;
+
+    $("serviceworker").textContent =
+      registro.active
+        ? "Instalado"
+        : "Pendiente de activación";
+
   } catch (error) {
     $("serviceworker").textContent =
-      "No verificado";
+      "Error de instalación";
+
+    console.error(
+      "SIA Campo - Service Worker:",
+      error
+    );
   }
 }
+
 
 async function iniciarAplicacion() {
   actualizarConexion();
