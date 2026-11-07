@@ -55,7 +55,10 @@ self.addEventListener("activate", event => {
         nombres
           .filter(
             nombre =>
-              nombre.startsWith("sia-campo-lab-") &&
+              (
+            nombre.startsWith("sia-campo-lab-") ||
+            nombre.startsWith("banimapp-lab-")
+          ) &&
               nombre !== CACHE_NAME
           )
           .map(nombre => caches.delete(nombre))
