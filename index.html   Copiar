@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <meta name="theme-color" content="#153E37">
+
+  <meta name="description"
+        content="Laboratorio experimental SIA Campo">
+
+  <title>SIA Campo | Laboratorio PWA</title>
+
+  <link rel="manifest" href="./manifest.webmanifest">
+
+  <style>
+    :root {
+      --primary: #153E37;
+      --secondary: #24775E;
+      --background: #F3F7F5;
+      --border: #DEE9E3;
+      --text: #18362F;
+      --muted: #65776E;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      font-family: Arial, sans-serif;
+      color: var(--text);
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 24px 18px;
+    }
+
+    .header-content {
+      max-width: 720px;
+      margin: auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    main {
+      max-width: 720px;
+      margin: auto;
+      padding: 18px;
+      padding-bottom: 48px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 17px;
+      margin: 0 0 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 14px 0 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #CBD8D1;
+      border-radius: 9px;
+      background: #FFFFFF;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 9px;
+      background: var(--secondary);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .secondary-button {
+      background: #E4EFEB;
+      color: var(--primary);
+      margin-top: 10px;
+    }
+
+    .status {
+      padding: 13px;
+      border-radius: 10px;
+      background: #E4EFEB;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .status.error {
+      background: #FCE8E6;
+      color: #8B211B;
+    }
+
+    .status.success {
+      background: #E4F3E9;
+      color: #185B38;
+    }
+
+    .diagnostic {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .diagnostic:last-child {
+      border-bottom: none;
+    }
+
+    .diagnostic span {
+      color: var(--muted);
+    }
+
+    .record {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      overflow-wrap: anywhere;
+    }
+
+    .record:last-child {
+      border-bottom: none;
+    }
+
+    .record p {
+      margin: 7px 0;
+      font-size: 13px;
+    }
+
+    .record small {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .notice {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-content">
+    <h1>SIA CAMPO</h1>
+    <p>
+      Alcance Poblacional · Laboratorio PWA
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <div id="estado" class="status"
+       role="status" aria-live="polite">
+    Preparando aplicación experimental...
+  </div>
+
+  <section class="card">
+    <h2>Nueva captura</h2>
+
+    <form id="formulario">
+
+      <label for="tipo">
+        Tipo de registro
+      </label>
+
+      <select id="tipo" required>
+        <option value="">Seleccionar</option>
+        <option value="SENSIBILIZACION">
+          Sensibilización
+        </option>
+        <option value="VISITA_TECNICA">
+          Visita técnica
+        </option>
+      </select>
+
+      <label for="fecha">Fecha</label>
+      <input id="fecha"
+             type="date"
+             required>
+
+      <label for="responsable">
+        Responsable
+      </label>
+
+      <input id="responsable"
+             type="text"
+             maxlength="120"
+             required>
+
+      <label for="lugar">
+        Lugar o sector
+      </label>
+
+      <input id="lugar"
+             type="text"
+             maxlength="180"
+             required>
+
+      <label for="observaciones">
+        Observaciones
+      </label>
+
+      <textarea id="observaciones"
+                maxlength="2000"></textarea>
+
+      <button id="guardar"
+              type="submit"
+              disabled>
+        Guardar borrador local
+      </button>
+
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Registros locales</h2>
+
+    <p id="contador" class="empty">
+      Inicializando...
+    </p>
+
+    <div id="registros"></div>
+
+    <button id="actualizar"
+            class="secondary-button"
+            type="button"
+            disabled>
+      Actualizar registros
+    </button>
+  </section>
+
+  <section class="card">
+    <h2>Diagnóstico experimental</h2>
+
+    <div class="diagnostic">
+      <span>Conexión</span>
+      <strong id="conexion">
+        Sin verificar
+      </strong>
+    </div>
+
+    <div class="diagnostic">
+      <span>IndexedDB</span>
+      <strong id="almacenamiento">
+        Sin verificar
+      </strong>
+    </div>
+
+    <div class="diagnostic">
+      <span>Service Worker</span>
+      <strong id="serviceworker">
+        Sin verificar
+      </strong>
+    </div>
+
+    <div class="diagnostic">
+      <span>Aplicación</span>
+      <strong>PWA LAB</strong>
+    </div>
+
+    <p class="notice">
+      Entorno experimental con información
+      ficticia. No se transmiten registros
+      al servidor central.
+    </p>
+  </section>
+
+</main>
+
+<script src="./app.js" defer></script>
+
+</body>
+</html>
