@@ -1,15 +1,28 @@
 
 {
   "id": "./",
-  "name": "SIA Campo - Laboratorio de Alcance Poblacional",
-  "short_name": "SIA Campo",
-  "description": "Aplicación experimental de captura poblacional con almacenamiento sin conexión.",
+  "name": "banimApp",
+  "short_name": "banimApp",
+  "description": "SIA - Bienestar Animal. Aplicación de campo para sensibilizaciones y visitas técnicas.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F3F7F5",
+  "background_color": "#153E37",
   "theme_color": "#153E37",
   "lang": "es",
   "orientation": "any",
-  "icons": []
+  "icons": [
+    {
+      "src": "./banimapp-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./banimapp-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
