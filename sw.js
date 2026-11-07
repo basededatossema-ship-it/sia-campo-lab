@@ -12,20 +12,25 @@
 
 "use strict";
 
-const CACHE_NAME = "sia-campo-lab-v1";
+const CACHE_NAME = "banimapp-lab-v2";
 
 const BASE_URL = new URL(
   "./",
   self.location.href
 );
 
+
 const APP_SHELL = [
   "index.html",
   "app.js",
-  "manifest.webmanifest"
+  "manifest.webmanifest",
+  "banimapp-icon-180.png",
+  "banimapp-icon-192.png",
+  "banimapp-icon-512.png"
 ].map(
   archivo => new URL(archivo, BASE_URL).href
 );
+
 
 // INSTALACIÓN
 // Guardar los recursos principales.
