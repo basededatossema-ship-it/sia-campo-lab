@@ -270,6 +270,113 @@ function prepararRegistrosLocales() {
   });
 }
 
+/**
+ * P04-B2 - Cola local de sincronizacion.
+ *
+ * Transicion permitida:
+ * BORRADOR -> PENDIENTE
+ *
+ * No modifica UUID, operacion_id ni datos.
+ * No realiza solicitudes de red.
+ */
+function prepararEnvioLocal(uuid) {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error(
+        "Base local no inicializada"
+      ));
+      return;
+    }
+
+    const tx = db.transaction(
+      STORE_NAME,
+      "readwrite"
+    );
+
+    const almacen = tx.objectStore(STORE_NAME);
+    const consulta = almacen.get(uuid);
+
+    let resultado = null;
+    let causaError = null;
+
+    consulta.onsuccess = () => {
+      const registro = consulta.result;
+
+      try {
+        if (!registro) {
+          throw new Error(
+            "Registro local no encontrado"
+          );
+        }
+
+        if (registro.estado === "PENDIENTE") {
+          resultado = "YA_PENDIENTE";
+          return;
+        }
+
+        if (registro.estado !== "BORRADOR") {
+          throw new Error(
+            "Estado incompatible para preparar envío"
+          );
+        }
+
+        if (
+          !registro.operacion_id ||
+          registro.operacion_id !==
+            generarOperacionId(registro.id)
+        ) {
+          throw new Error(
+            "Identificador de operación inconsistente"
+          );
+        }
+
+        if (
+          !["SENSIBILIZACION", "VISITA_TECNICA"]
+            .includes(registro.tipo) ||
+          !registro.fecha ||
+          !registro.responsable ||
+          !registro.lugar
+        ) {
+          throw new Error(
+            "Registro incompleto para sincronización"
+          );
+        }
+
+        registro.estado = "PENDIENTE";
+        registro.preparadoEn =
+          new Date().toISOString();
+
+        almacen.put(registro);
+        resultado = "PREPARADO";
+
+      } catch (error) {
+        causaError = error;
+        tx.abort();
+      }
+    };
+
+    tx.oncomplete = () => {
+      resolve(resultado);
+    };
+
+    tx.onerror = () => {
+      reject(
+        causaError ||
+        tx.error ||
+        new Error("Error de actualización local")
+      );
+    };
+
+    tx.onabort = () => {
+      reject(
+        causaError ||
+        tx.error ||
+        new Error("Operación local cancelada")
+      );
+    };
+  });
+}
+
 async function mostrarRegistros() {
   const registros = await consultarRegistros();
 
@@ -279,9 +386,20 @@ async function mostrarRegistros() {
     )
   );
 
+  
+  const borradores = registros.filter(
+    r => r.estado === "BORRADOR"
+  ).length;
+
+  const pendientes = registros.filter(
+    r => r.estado === "PENDIENTE"
+  ).length;
+
   $("contador").textContent =
-    registros.length +
-    " borrador(es) almacenado(s).";
+    registros.length + " registro(s) local(es). " +
+    borradores + " borrador(es). " +
+    pendientes + " pendiente(s).";
+
 
   const contenedor = $("registros");
   contenedor.replaceChildren();
@@ -330,6 +448,50 @@ async function mostrarRegistros() {
       identificador,
       operacionRegistro
     );
+
+    
+    // P04-B2: preparar manualmente la
+    // sincronizacion de un borrador.
+
+    if (registro.estado === "BORRADOR") {
+      const botonPreparar =
+        document.createElement("button");
+
+      botonPreparar.type = "button";
+      botonPreparar.className =
+        "secondary-button";
+
+      botonPreparar.textContent =
+        "Preparar sincronización";
+
+      botonPreparar.addEventListener(
+        "click",
+        async () => {
+          botonPreparar.disabled = true;
+
+          try {
+            const resultado =
+              await prepararEnvioLocal(registro.id);
+
+            await mostrarRegistros();
+
+            mensaje(
+              resultado === "PREPARADO"
+                ? "Registro incorporado a la cola local."
+                : "El registro ya estaba pendiente.",
+              "success"
+            );
+
+          } catch (error) {
+            mensaje(error.message, "error");
+            botonPreparar.disabled = false;
+          }
+        }
+      );
+
+      elemento.appendChild(botonPreparar);
+    }
+
 
     contenedor.appendChild(elemento);
   }
