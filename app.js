@@ -308,7 +308,12 @@ function prepararEnvioLocal(uuid) {
             "Registro local no encontrado"
           );
         }
-
+        if (registro.formularioVersion === "BA-05F") {
+          throw new Error(
+            "La sincronización institucional BA " +
+            "todavía no está habilitada."
+          );
+        }
         if (registro.estado === "PENDIENTE") {
           resultado = "YA_PENDIENTE";
           return;
@@ -454,7 +459,6 @@ async function mostrarRegistros() {
     // sincronizacion de un borrador.
 
     if (registro.estado === "BORRADOR") {
-      const botonPreparar =
         document.createElement("button");
 
       botonPreparar.type = "button";
