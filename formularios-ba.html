@@ -1,0 +1,574 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#153E37">
+<title>banimApp | Formularios Bienestar Animal</title>
+
+<style>
+:root {
+  --verde:#153E37;
+  --medio:#24775E;
+  --fondo:#F3F7F5;
+  --borde:#DEE9E3;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  color:var(--verde);
+  background:var(--fondo);
+}
+header {
+  background:var(--verde);
+  color:white;
+  padding:20px;
+}
+header h1 {font-size:23px;margin:0}
+header p {font-size:13px;margin:8px 0 0}
+main {
+  max-width:760px;
+  margin:auto;
+  padding:16px 16px 48px;
+}
+.card {
+  background:white;
+  padding:20px;
+  border:1px solid var(--borde);
+  border-radius:14px;
+  margin-bottom:16px;
+}
+h2 {font-size:17px;margin:0 0 14px}
+h3 {font-size:15px;margin:18px 0 8px}
+label {
+  display:block;
+  font-size:13px;
+  font-weight:bold;
+  margin:13px 0 6px;
+}
+input,select,textarea,button {
+  font:inherit;
+}
+input,select,textarea {
+  width:100%;
+  padding:11px;
+  border:1px solid #CBD8D1;
+  border-radius:8px;
+  background:white;
+}
+textarea {min-height:90px}
+input[readonly] {
+  background:#EEF3F0;
+  color:#345B4D;
+}
+button {
+  padding:13px;
+  border:0;
+  border-radius:9px;
+  background:var(--medio);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:disabled {
+  opacity:.55;
+  cursor:not-allowed;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 12px;
+}
+@media(max-width:540px){
+  .grid{grid-template-columns:1fr}
+}
+.hidden {display:none}
+.small {
+  font-size:12px;
+  line-height:1.5;
+  color:#61776E;
+}
+.status {
+  padding:13px;
+  border-radius:9px;
+  background:#E4EFEB;
+  font-size:13px;
+  white-space:pre-wrap;
+}
+a {color:inherit}
+details {
+  border:1px solid var(--borde);
+  border-radius:9px;
+  padding:12px;
+  margin:10px 0;
+}
+summary {font-weight:bold;cursor:pointer}
+.counter {
+  display:grid;
+  grid-template-columns:1fr 105px;
+  gap:10px;
+  align-items:center;
+  margin:9px 0;
+}
+.counter label {margin:0}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>banimApp</h1>
+  <p>SIA · Bienestar Animal · Formularios institucionales</p>
+</header>
+
+<main>
+<p><a href="./index.html">Volver a banimApp</a></p>
+
+<section class="card">
+<h2>Tipo de actividad</h2>
+<label for="tipo">Seleccionar formulario</label>
+<select id="tipo">
+  <option value="VISITA_TECNICA">Visita Técnica</option>
+  <option value="SENSIBILIZACION">Sensibilización</option>
+</select>
+<p class="small">
+  Entorno de pruebas. No se almacenará ni transmitirá
+  la información diligenciada.
+</p>
+</section>
+
+<form id="formulario">
+
+<section class="card">
+<h2>Ubicación de la actividad</h2>
+
+<label for="zona">Zona</label>
+<select id="zona" required>
+  <option value="">Seleccionar</option>
+  <option value="URBANA">Urbana</option>
+  <option value="RURAL">Rural</option>
+</select>
+
+<div id="urbana" class="hidden">
+  <label for="comuna">Comuna</label>
+  <select id="comuna"></select>
+
+  <label for="barrio">Barrio</label>
+  <input id="barrio" maxlength="180"
+         placeholder="Escribir barrio">
+</div>
+
+<div id="rural" class="hidden">
+  <label for="corregimiento">Corregimiento</label>
+  <select id="corregimiento"></select>
+
+  <label for="vereda">Vereda</label>
+  <input id="vereda" maxlength="180"
+         placeholder="Escribir vereda">
+</div>
+
+<label for="lugar">Nombre del sitio</label>
+<input id="lugar" required maxlength="180">
+
+<h3>Georreferenciación</h3>
+<button id="gps" type="button">
+  Obtener ubicación GPS
+</button>
+<p id="gpsEstado" class="small">
+  Coordenadas pendientes de captura.
+</p>
+
+<div class="grid">
+  <div>
+    <label for="longitud">Longitud</label>
+    <input id="longitud" readonly>
+  </div>
+  <div>
+    <label for="latitud">Latitud</label>
+    <input id="latitud" readonly>
+  </div>
+</div>
+</section>
+
+<section id="visita" class="card">
+<h2>Visita Técnica</h2>
+
+<label for="asunto">Asunto</label>
+<textarea id="asunto" maxlength="2000"></textarea>
+
+<label for="fechaVisita">Fecha de la visita</label>
+<input type="date" id="fechaVisita">
+
+<label for="poblacionComunidad">
+  Población-comunidad
+</label>
+<input id="poblacionComunidad" readonly
+       placeholder="Catálogo pendiente de confirmación">
+<p class="small">
+  Este campo permanece sin catálogo oficial.
+</p>
+
+<h3>Informe</h3>
+<div class="grid">
+  <div>
+    <label for="numeroInformeVisita">
+      Número de informe (opcional)
+    </label>
+    <input id="numeroInformeVisita" maxlength="80">
+  </div>
+  <div>
+    <label for="fechaInformeVisita">
+      Fecha del informe (opcional)
+    </label>
+    <input id="fechaInformeVisita" type="date">
+  </div>
+</div>
+</section>
+
+<section id="sensibilizacion" class="card hidden">
+<h2>Sensibilización</h2>
+
+<label for="meta">Meta</label>
+<input id="meta" value="META 11" readonly>
+
+<label for="eje">Eje estratégico</label>
+<select id="eje"></select>
+
+<label for="tematica">Temática</label>
+<textarea id="tematica" maxlength="2000"></textarea>
+
+<label for="fechaActividad">
+  Fecha de actividad (automática)
+</label>
+<input id="fechaActividad" readonly>
+
+<h3>Informe y radicado</h3>
+<div class="grid">
+  <div>
+    <label for="numeroInformeSens">
+      Número de informe (opcional)
+    </label>
+    <input id="numeroInformeSens" maxlength="80">
+  </div>
+  <div>
+    <label for="fechaInformeSens">
+      Fecha del informe (opcional)
+    </label>
+    <input id="fechaInformeSens" type="date">
+  </div>
+  <div>
+    <label for="numeroRadicado">
+      Número de radicado (opcional)
+    </label>
+    <input id="numeroRadicado" maxlength="80">
+  </div>
+  <div>
+    <label for="fechaRadicado">
+      Fecha del radicado (opcional)
+    </label>
+    <input id="fechaRadicado" type="date">
+  </div>
+</div>
+
+<h3>Alcance poblacional</h3>
+<p class="small">
+  Registrar cantidades enteras. Los grupos pueden
+  representar clasificaciones superpuestas.
+</p>
+<div id="conteos"></div>
+</section>
+
+<section class="card">
+<h2>Responsable institucional</h2>
+<p class="small">
+  El responsable se asociará automáticamente cuando
+  habilitemos la autenticación institucional.
+  No se admite suplantar la identidad escribiendo
+  libremente un nombre.
+</p>
+
+<button type="submit" style="width:100%">
+  Validar estructura del formulario
+</button>
+
+<p class="small">
+  Este botón solo comprueba los campos en memoria.
+  No guarda borradores ni envía información.
+</p>
+
+<div id="resultado" class="status" role="status"
+     aria-live="polite">
+  Formulario pendiente de validación.
+</div>
+</section>
+
+</form>
+</main>
+
+<script src="./contrato-ba.js"></script>
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const GRUPOS = [
+  ["Género",[
+    ["femenino","Femenino"],
+    ["masculino","Masculino"]
+  ]],
+  ["Edad",[
+    ["menores18","Menores de 18 años"],
+    ["edad18a28","De 18 a 28 años"],
+    ["edad29a59","De 29 a 59 años"],
+    ["mayores60","Mayores de 60 años"]
+  ]],
+  ["Víctimas del conflicto armado",[
+    ["desplazamiento","Desplazamiento"],
+    ["otroHechoVictimizante","Otro hecho victimizante"],
+    ["otrasVictimas","Otros"]
+  ]],
+  ["Situación poblacional",[
+    ["discapacitado","Discapacitado"],
+    ["desmovilizado","Desmovilizado(a)"],
+    ["reincorporado","Reincorporado(a)"],
+    ["gestante","Gestante"],
+    ["cabezaHogar","Cabeza de hogar"],
+    ["migrante","Migrante"],
+    ["adultoMayor","Adulto mayor"],
+    ["ninguno","Ninguno"]
+  ]],
+  ["Grupo étnico",[
+    ["afrodescendiente","Afrodescendiente"],
+    ["indigena","Indígena"],
+    ["rom","Rom"]
+  ]],
+  ["Orientación sexual",[
+    ["heterosexual","Heterosexual"],
+    ["osigd","OSIGD"]
+  ]]
+];
+
+function fechaBogota() {
+  const partes = new Intl.DateTimeFormat("en-US", {
+    timeZone:"America/Bogota",
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit"
+  }).formatToParts(new Date());
+
+  const valor = tipo =>
+    partes.find(p => p.type === tipo).value;
+
+  return valor("year") + "-" +
+    valor("month") + "-" + valor("day");
+}
+
+function opciones(id, prefijo, cantidad) {
+  const select = $(id);
+  select.replaceChildren(new Option("Seleccionar",""));
+
+  for (let i=1;i<=cantidad;i++) {
+    const valor = prefijo + " " + i;
+    select.add(new Option(valor,valor));
+  }
+}
+
+function construirConteos() {
+  const contenedor = $("conteos");
+
+  for (const [titulo,campos] of GRUPOS) {
+    const bloque = document.createElement("details");
+    const resumen = document.createElement("summary");
+    resumen.textContent = titulo;
+    bloque.append(resumen);
+
+    for (const [campo,etiqueta] of campos) {
+      const fila = document.createElement("div");
+      fila.className = "counter";
+
+      const label = document.createElement("label");
+      label.htmlFor = "conteo_" + campo;
+      label.textContent = etiqueta;
+
+      const input = document.createElement("input");
+      input.id = "conteo_" + campo;
+      input.type = "number";
+      input.min = "0";
+      input.step = "1";
+      input.value = "0";
+      input.required = true;
+
+      fila.append(label,input);
+      bloque.append(fila);
+    }
+    contenedor.append(bloque);
+  }
+}
+
+function alternarTipo() {
+  const visita = $("tipo").value === "VISITA_TECNICA";
+  $("visita").classList.toggle("hidden",!visita);
+  $("sensibilizacion").classList.toggle("hidden",visita);
+}
+
+function alternarZona() {
+  const zona = $("zona").value;
+  $("urbana").classList.toggle(
+    "hidden",zona !== "URBANA"
+  );
+  $("rural").classList.toggle(
+    "hidden",zona !== "RURAL"
+  );
+
+  $("comuna").required = zona === "URBANA";
+  $("barrio").required = zona === "URBANA";
+  $("corregimiento").required = zona === "RURAL";
+  $("vereda").required = zona === "RURAL";
+}
+
+let posicionGPS = null;
+
+function obtenerGPS() {
+  posicionGPS = null;
+  $("latitud").value = "";
+  $("longitud").value = "";
+
+  if (!navigator.geolocation) {
+    $("gpsEstado").textContent =
+      "Geolocalización no disponible.";
+    return;
+  }
+
+  $("gpsEstado").textContent =
+    "Solicitando ubicación al dispositivo...";
+
+  navigator.geolocation.getCurrentPosition(
+    posicion => {
+      const lat = posicion.coords.latitude;
+      const lon = posicion.coords.longitude;
+
+      if (!Number.isFinite(lat) ||
+          !Number.isFinite(lon)) {
+        $("gpsEstado").textContent =
+          "Coordenadas inválidas.";
+        return;
+      }
+
+      posicionGPS = {latitud:lat,longitud:lon};
+      $("latitud").value = lat.toFixed(6);
+      $("longitud").value = lon.toFixed(6);
+      $("gpsEstado").textContent =
+        "Coordenadas recibidas del dispositivo.";
+    },
+    () => {
+      $("gpsEstado").textContent =
+        "No se pudo obtener la ubicación. " +
+        "Revisa el permiso de GPS.";
+    },
+    {enableHighAccuracy:true,timeout:20000,
+     maximumAge:0}
+  );
+}
+
+function construirRegistro() {
+  const tipo = $("tipo").value;
+  const zona = $("zona").value;
+
+  const ubicacion = {
+    zona,
+    comuna:zona === "URBANA"
+      ? $("comuna").value : "N/A",
+    barrio:zona === "URBANA"
+      ? $("barrio").value.trim() : "N/A",
+    corregimiento:zona === "RURAL"
+      ? $("corregimiento").value : "N/A",
+    vereda:zona === "RURAL"
+      ? $("vereda").value.trim() : "N/A",
+    lugar:$("lugar").value.trim(),
+    longitud:posicionGPS?.longitud,
+    latitud:posicionGPS?.latitud
+  };
+
+  // Identificadores efímeros de prueba:
+  // nunca se almacenan ni se transmiten.
+  const id = crypto.randomUUID();
+  const registro = {
+    id,
+    operacion_id:"P04-" + id.replace(/-/g,""),
+    tipo,
+    creadoEn:new Date().toISOString(),
+    formulario:{ubicacion}
+  };
+
+  const f = registro.formulario;
+
+  if (tipo === "VISITA_TECNICA") {
+    f.asunto = $("asunto").value.trim();
+    f.fechaVisita = $("fechaVisita").value;
+    f.numeroInforme = $("numeroInformeVisita").value;
+    f.fechaInforme = $("fechaInformeVisita").value;
+    f.poblacionComunidad = "";
+  } else {
+    f.meta = "META 11";
+    f.ejeEstrategico = $("eje").value;
+    f.tematica = $("tematica").value.trim();
+    f.fechaActividad = fechaBogota();
+    $("fechaActividad").value = f.fechaActividad;
+    f.numeroInforme = $("numeroInformeSens").value;
+    f.fechaInforme = $("fechaInformeSens").value;
+    f.numeroRadicado = $("numeroRadicado").value;
+    f.fechaRadicado = $("fechaRadicado").value;
+
+    f.alcancePoblacional = {};
+    for (const campo of SIABanimContrato.conteos) {
+      const valor = $("conteo_" + campo).value;
+      f.alcancePoblacional[campo] =
+        valor.trim() === "" ? null : Number(valor);
+    }
+  }
+  return registro;
+}
+
+function validarFormulario(evento) {
+  evento.preventDefault();
+
+  if (!window.SIABanimContrato) {
+    $("resultado").textContent =
+      "No está disponible el contrato 05F.3A.";
+    return;
+  }
+
+  const registro = construirRegistro();
+  const validacion =
+    SIABanimContrato.normalizar(registro);
+
+  $("resultado").textContent = validacion.ok
+    ? "Estructura validada correctamente. " +
+      "No se ha guardado ni enviado información."
+    : "Se detectaron campos pendientes:\n" +
+      validacion.errores.join("\n");
+}
+
+opciones("comuna","COMUNA",10);
+opciones("corregimiento","CORREGIMIENTO",8);
+
+$("eje").add(new Option("Seleccionar",""));
+for (const eje of SIABanimContrato.ejes) {
+  $("eje").add(new Option(eje,eje));
+}
+
+construirConteos();
+$("fechaActividad").value = fechaBogota();
+
+$("tipo").addEventListener("change",alternarTipo);
+$("zona").addEventListener("change",alternarZona);
+$("gps").addEventListener("click",obtenerGPS);
+$("formulario").addEventListener("submit",validarFormulario);
+
+alternarTipo();
+alternarZona();
+</script>
+</body>
+</html>
