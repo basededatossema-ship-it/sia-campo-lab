@@ -295,6 +295,14 @@ summary {font-weight:bold;cursor:pointer}
   Guardar borrador institucional local
 </button>
 
+<button id="nuevaActividad"
+        type="button"
+        class="hidden"
+        style="width:100%;margin-top:10px;
+               background:#E4EFEB;color:#153E37">
+  Nueva actividad
+</button>
+
 <p class="small">
   Laboratorio: guardar únicamente información ficticia.
   Los registros quedan en este dispositivo.
@@ -536,8 +544,59 @@ function construirRegistro() {
 }
 
 
+let actividadGuardada = false;
+let guardadoEnCurso = false;
+
+function limpiarFormularioInstitucional() {
+  $("formulario").reset();
+
+  posicionGPS = null;
+
+  $("longitud").value = "";
+  $("latitud").value = "";
+
+  $("gpsEstado").textContent =
+    "Coordenadas pendientes de captura.";
+
+  $("zona").value = "";
+  $("comuna").value = "";
+  $("barrio").value = "";
+  $("corregimiento").value = "";
+  $("vereda").value = "";
+
+  $("tipo").value = "VISITA_TECNICA";
+  $("fechaActividad").value = fechaBogota();
+
+  for (const campo of SIABanimContrato.conteos) {
+    $("conteo_" + campo).value = "0";
+  }
+
+  alternarTipo();
+  alternarZona();
+}
+
+function iniciarNuevaActividad() {
+  limpiarFormularioInstitucional();
+
+  actividadGuardada = false;
+
+  $("guardarInstitucional").disabled = false;
+  $("nuevaActividad").classList.add("hidden");
+
+  $("resultado").textContent =
+    "Nueva actividad. Diligencia el formulario.";
+}
+
+      
+
 async function validarFormulario(evento) {
   evento.preventDefault();
+
+  if (guardadoEnCurso || actividadGuardada) {
+    return;
+  }
+
+  guardadoEnCurso = true;
 
   const boton = $("guardarInstitucional");
   const resultado = $("resultado");
@@ -545,7 +604,6 @@ async function validarFormulario(evento) {
   boton.disabled = true;
 
   try {
-
     if (
       !window.SIABanimContrato ||
       !window.SIABanimAlmacenamiento
@@ -567,12 +625,10 @@ async function validarFormulario(evento) {
       return;
     }
 
-    // Marcador de la nueva estructura BA.
     registro.formularioVersion = "BA-05F";
     registro.estado = "BORRADOR";
     registro.origen = "SIA_BA_FORMULARIO_LAB";
 
-    // Compatibilidad con la lista local anterior.
     registro.fecha =
       registro.tipo === "VISITA_TECNICA"
         ? registro.formulario.fechaVisita
@@ -581,14 +637,16 @@ async function validarFormulario(evento) {
     registro.lugar =
       registro.formulario.ubicacion.lugar;
 
-    // No asignar identidades ficticias ni
-    // confiar en nombres introducidos manualmente.
     registro.responsable = "";
 
     const guardado =
       await SIABanimAlmacenamiento.guardar(
         registro
       );
+
+    // Desde este punto la captura ya fue
+    // escrita. No permitir un segundo UUID.
+    actividadGuardada = true;
 
     const confirmado =
       await SIABanimAlmacenamiento.verificar(
@@ -597,36 +655,44 @@ async function validarFormulario(evento) {
 
     if (!confirmado) {
       resultado.textContent =
-        "El guardado terminó, pero no se pudo " +
-        "confirmar la lectura del registro. " +
-        "No vuelvas a guardarlo todavía.";
+        "El registro fue guardado, pero no " +
+        "pudo confirmarse su lectura.\n" +
+        "UUID: " + guardado.uuid + "\n" +
+        "No vuelvas a guardar esta actividad.";
+
       return;
     }
+
+    limpiarFormularioInstitucional();
+
+    $("nuevaActividad").classList.remove(
+      "hidden"
+    );
 
     resultado.textContent =
       "BORRADOR LOCAL GUARDADO\n" +
       "UUID: " + guardado.uuid + "\n" +
       "Estado: BORRADOR\n" +
-      "Sin transmisión al servidor.";
+      "Formulario limpiado correctamente.\n" +
+      "Selecciona Nueva actividad para " +
+      "realizar otra captura.";
 
     console.info(
       "BA05F3B2_GUARDADO_LOCAL_CONFIRMADO",
       guardado.uuid
     );
 
-    // No limpiar automáticamente la pantalla.
-    // Evita perder datos antes de revisarlos.
-
   } catch (error) {
-
     resultado.textContent =
       "No fue posible guardar el borrador:\n" +
       error.message;
 
   } finally {
-    boton.disabled = false;
+    guardadoEnCurso = false;
+    boton.disabled = actividadGuardada;
   }
 }
+
 
 
 opciones("comuna","COMUNA",10);
@@ -644,6 +710,10 @@ $("tipo").addEventListener("change",alternarTipo);
 $("zona").addEventListener("change",alternarZona);
 $("gps").addEventListener("click",obtenerGPS);
 $("formulario").addEventListener("submit",validarFormulario);
+$("nuevaActividad").addEventListener(
+  "click",
+  iniciarNuevaActividad
+);
 
 alternarTipo();
 alternarZona();
