@@ -458,8 +458,14 @@ async function mostrarRegistros() {
     // P04-B2: preparar manualmente la
     // sincronizacion de un borrador.
 
-    if (registro.estado === "BORRADOR") {
+   
+    if (
+      registro.estado === "BORRADOR" &&
+      registro.formularioVersion !== "BA-05F"
+    ) {
+      const botonPreparar =
         document.createElement("button");
+
 
       botonPreparar.type = "button";
       botonPreparar.className =
