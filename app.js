@@ -1,7 +1,7 @@
 
 /**
- * SIA CAMPO - LABORATORIO PWA
- * Etapa 9.9 - Almacenamiento local
+ * banimApp - SIA Bienestar Animal
+ * P04-B1 - Preparación del almacenamiento local
  *
  * Datos ficticios exclusivamente.
  * No transmite información a servidores.
@@ -52,6 +52,24 @@ function generarUUID() {
     hex.slice(16, 20),
     hex.slice(20)
   ].join("-");
+}
+
+/**
+ * P04-B1
+ * Identificador de operación permanente.
+ */
+function generarOperacionId(uuid) {
+  const patron =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!patron.test(String(uuid))) {
+    throw new Error(
+      "UUID inválido para operación"
+    );
+  }
+
+  return "P04-" +
+    uuid.toLowerCase().replace(/-/g, "");
 }
 
 function abrirBase() {
@@ -170,11 +188,95 @@ function consultarRegistros() {
   });
 }
 
+/**
+ * P04-B1
+ * Migración de borradores anteriores.
+ *
+ * Conserva datos, UUID y estado.
+ * Solo agrega operacion_id si falta.
+ * No transmite información.
+ */
+function prepararRegistrosLocales() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error(
+        "Base local no inicializada"
+      ));
+      return;
+    }
+
+    const tx = db.transaction(
+      STORE_NAME,
+      "readwrite"
+    );
+
+    const store = tx.objectStore(STORE_NAME);
+    const cursorRequest = store.openCursor();
+
+    let preparados = 0;
+    let errorPreparacion = null;
+
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+
+      if (!cursor) return;
+
+      const registro = cursor.value;
+
+      try {
+        if (
+          typeof registro.operacion_id !== "string" ||
+          registro.operacion_id.length === 0
+        ) {
+          registro.operacion_id =
+            generarOperacionId(registro.id);
+
+          cursor.update(registro);
+          preparados++;
+        }
+
+        cursor.continue();
+
+      } catch (error) {
+        errorPreparacion = error;
+
+        try {
+          tx.abort();
+        } catch (errorAbortar) {
+          // La transacción puede estar terminada.
+        }
+      }
+    };
+
+    tx.oncomplete = () => {
+      resolve(preparados);
+    };
+
+    tx.onerror = () => {
+      reject(
+        errorPreparacion ||
+        tx.error ||
+        new Error("Error al preparar registros")
+      );
+    };
+
+    tx.onabort = () => {
+      reject(
+        errorPreparacion ||
+        tx.error ||
+        new Error("Preparación cancelada")
+      );
+    };
+  });
+}
+
 async function mostrarRegistros() {
   const registros = await consultarRegistros();
 
   registros.sort((a, b) =>
-    b.creadoEn.localeCompare(a.creadoEn)
+    String(b.creadoEn || "").localeCompare(
+      String(a.creadoEn || "")
+    )
   );
 
   $("contador").textContent =
@@ -201,13 +303,32 @@ async function mostrarRegistros() {
       registro.lugar
     ].join(" · ");
 
-    const identificador = document.createElement("small");
-    identificador.textContent = registro.id;
+    const estadoRegistro =
+      document.createElement("p");
+
+    estadoRegistro.textContent =
+      "Estado: " +
+      (registro.estado || "BORRADOR");
+
+    const identificador =
+      document.createElement("small");
+
+    identificador.textContent =
+      "UUID: " + registro.id;
+
+    const operacionRegistro =
+      document.createElement("p");
+
+    operacionRegistro.textContent =
+      "Operación: " +
+      (registro.operacion_id || "No preparada");
 
     elemento.append(
       titulo,
       detalle,
-      identificador
+      estadoRegistro,
+      identificador,
+      operacionRegistro
     );
 
     contenedor.appendChild(elemento);
@@ -221,8 +342,12 @@ async function guardarFormulario(evento) {
   boton.disabled = true;
 
   try {
+    const nuevoUUID = generarUUID();
+
     const registro = {
-      id: generarUUID(),
+      id: nuevoUUID,
+      operacion_id:
+        generarOperacionId(nuevoUUID),
       tipo: $("tipo").value,
       fecha: $("fecha").value,
       responsable: $("responsable").value.trim(),
@@ -234,14 +359,18 @@ async function guardarFormulario(evento) {
       origen: "SIA_CAMPO_PWA_LAB"
     };
 
-    if (!["SENSIBILIZACION", "VISITA_TECNICA"]
-        .includes(registro.tipo)) {
+    if (![
+      "SENSIBILIZACION",
+      "VISITA_TECNICA"
+    ].includes(registro.tipo)) {
       throw new Error("Tipo de registro inválido");
     }
 
-    if (!registro.fecha ||
-        !registro.responsable ||
-        !registro.lugar) {
+    if (
+      !registro.fecha ||
+      !registro.responsable ||
+      !registro.lugar
+    ) {
       throw new Error(
         "Completa los campos obligatorios"
       );
@@ -274,7 +403,6 @@ async function guardarFormulario(evento) {
   }
 }
 
-
 async function verificarServiceWorker() {
   if (!("serviceWorker" in navigator)) {
     $("serviceworker").textContent =
@@ -305,7 +433,6 @@ async function verificarServiceWorker() {
     );
   }
 }
-
 
 async function iniciarAplicacion() {
   actualizarConexion();
@@ -340,6 +467,14 @@ async function iniciarAplicacion() {
 
   try {
     db = await abrirBase();
+
+    const registrosPreparados =
+      await prepararRegistrosLocales();
+
+    console.info(
+      "P04-B1 registros preparados:",
+      registrosPreparados
+    );
 
     $("almacenamiento").textContent =
       "Disponible";
