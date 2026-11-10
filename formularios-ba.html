@@ -289,13 +289,16 @@ summary {font-weight:bold;cursor:pointer}
   libremente un nombre.
 </p>
 
-<button type="submit" style="width:100%">
-  Validar estructura del formulario
+<button id="guardarInstitucional"
+        type="submit"
+        style="width:100%">
+  Guardar borrador institucional local
 </button>
 
 <p class="small">
-  Este botón solo comprueba los campos en memoria.
-  No guarda borradores ni envía información.
+  Laboratorio: guardar únicamente información ficticia.
+  Los registros quedan en este dispositivo.
+  No se transmiten a ningún servidor.
 </p>
 
 <div id="resultado" class="status" role="status"
@@ -308,6 +311,7 @@ summary {font-weight:bold;cursor:pointer}
 </main>
 
 <script src="./contrato-ba.js"></script>
+<script src="./almacenamiento-ba.js"></script>
 <script>
 "use strict";
 
@@ -531,25 +535,99 @@ function construirRegistro() {
   return registro;
 }
 
-function validarFormulario(evento) {
+
+async function validarFormulario(evento) {
   evento.preventDefault();
 
-  if (!window.SIABanimContrato) {
-    $("resultado").textContent =
-      "No está disponible el contrato 05F.3A.";
-    return;
+  const boton = $("guardarInstitucional");
+  const resultado = $("resultado");
+
+  boton.disabled = true;
+
+  try {
+
+    if (
+      !window.SIABanimContrato ||
+      !window.SIABanimAlmacenamiento
+    ) {
+      throw new Error(
+        "COMPONENTES_BA_NO_DISPONIBLES"
+      );
+    }
+
+    const registro = construirRegistro();
+
+    const validacion =
+      SIABanimContrato.normalizar(registro);
+
+    if (!validacion.ok) {
+      resultado.textContent =
+        "Formulario incompleto:\n" +
+        validacion.errores.join("\n");
+      return;
+    }
+
+    // Marcador de la nueva estructura BA.
+    registro.formularioVersion = "BA-05F";
+    registro.estado = "BORRADOR";
+    registro.origen = "SIA_BA_FORMULARIO_LAB";
+
+    // Compatibilidad con la lista local anterior.
+    registro.fecha =
+      registro.tipo === "VISITA_TECNICA"
+        ? registro.formulario.fechaVisita
+        : registro.formulario.fechaActividad;
+
+    registro.lugar =
+      registro.formulario.ubicacion.lugar;
+
+    // No asignar identidades ficticias ni
+    // confiar en nombres introducidos manualmente.
+    registro.responsable = "";
+
+    const guardado =
+      await SIABanimAlmacenamiento.guardar(
+        registro
+      );
+
+    const confirmado =
+      await SIABanimAlmacenamiento.verificar(
+        guardado.uuid
+      );
+
+    if (!confirmado) {
+      resultado.textContent =
+        "El guardado terminó, pero no se pudo " +
+        "confirmar la lectura del registro. " +
+        "No vuelvas a guardarlo todavía.";
+      return;
+    }
+
+    resultado.textContent =
+      "BORRADOR LOCAL GUARDADO\n" +
+      "UUID: " + guardado.uuid + "\n" +
+      "Estado: BORRADOR\n" +
+      "Sin transmisión al servidor.";
+
+    console.info(
+      "BA05F3B2_GUARDADO_LOCAL_CONFIRMADO",
+      guardado.uuid
+    );
+
+    // No limpiar automáticamente la pantalla.
+    // Evita perder datos antes de revisarlos.
+
+  } catch (error) {
+
+    resultado.textContent =
+      "No fue posible guardar el borrador:\n" +
+      error.message;
+
+  } finally {
+    boton.disabled = false;
   }
-
-  const registro = construirRegistro();
-  const validacion =
-    SIABanimContrato.normalizar(registro);
-
-  $("resultado").textContent = validacion.ok
-    ? "Estructura validada correctamente. " +
-      "No se ha guardado ni enviado información."
-    : "Se detectaron campos pendientes:\n" +
-      validacion.errores.join("\n");
 }
+
 
 opciones("comuna","COMUNA",10);
 opciones("corregimiento","CORREGIMIENTO",8);
