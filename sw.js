@@ -12,7 +12,7 @@
 
 "use strict";
 
-const CACHE_NAME = "banimapp-lab-v3";
+const CACHE_NAME = "banimapp-lab-v4";
 
 const BASE_URL = new URL(
   "./",
@@ -118,8 +118,11 @@ self.addEventListener("fetch", event => {
     return;
   }
 
+  
+  // P04-B1.1
   // Archivos de la aplicación:
-  // priorizar el recurso guardado.
+  // consultar primero la red.
+  // Si no hay conexión, usar la caché.
 
   const recurso = APP_SHELL.find(
     archivo =>
@@ -134,13 +137,28 @@ self.addEventListener("fetch", event => {
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
+      try {
+        const respuesta = await fetch(request);
+
+        if (respuesta.ok) {
+          await cache.put(
+            recurso,
+            respuesta.clone()
+          );
+
+          return respuesta;
+        }
+      } catch (error) {
+        // La red puede no estar disponible.
+      }
+
       const guardado = await cache.match(recurso);
 
       if (guardado) {
         return guardado;
       }
 
-      return fetch(request);
+      return Response.error();
     })()
   );
 });
