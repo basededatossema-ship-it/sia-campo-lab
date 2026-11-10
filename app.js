@@ -382,6 +382,73 @@ function prepararEnvioLocal(uuid) {
   });
 }
 
+/**
+ * SIA - banimApp
+ * Etapa 05F.3B.2B
+ *
+ * Eliminacion individual de borradores
+ * experimentales expresamente identificados.
+ */
+
+const BA_BORRADORES_ELIMINABLES = new Set([
+  "e81d342b-680d-4f5d-912b-1bf70eb752db",
+  "ee9d6775-4a5d-4e1e-be4c-ea6043941655",
+  "9b5e4601-bf4e-4400-9274-b4041e7bd403"
+]);
+
+function eliminarBorradorPrueba(uuid) {
+  return new Promise((resolve, reject) => {
+
+    if (!db) {
+      reject(new Error("BASE_LOCAL_NO_DISPONIBLE"));
+      return;
+    }
+
+    if (!BA_BORRADORES_ELIMINABLES.has(uuid)) {
+      reject(new Error("ELIMINACION_NO_AUTORIZADA"));
+      return;
+    }
+
+    const tx = db.transaction(
+      STORE_NAME,
+      "readwrite"
+    );
+
+    const almacen = tx.objectStore(STORE_NAME);
+    const consulta = almacen.get(uuid);
+
+    let eliminado = false;
+    let errorLocal = null;
+
+    consulta.onsuccess = () => {
+      const registro = consulta.result;
+
+      if (
+        !registro ||
+        registro.id !== uuid ||
+        registro.estado !== "BORRADOR"
+      ) {
+        errorLocal = "REGISTRO_NO_ELIMINABLE";
+        tx.abort();
+        return;
+      }
+
+      almacen.delete(uuid);
+      eliminado = true;
+    };
+
+    tx.oncomplete = () => resolve(eliminado);
+
+    tx.onerror = () => reject(
+      new Error(errorLocal || "ELIMINACION_FALLIDA")
+    );
+
+    tx.onabort = () => reject(
+      new Error(errorLocal || "ELIMINACION_CANCELADA")
+    );
+  });
+}
+
 async function mostrarRegistros() {
   const registros = await consultarRegistros();
 
@@ -502,6 +569,51 @@ async function mostrarRegistros() {
       elemento.appendChild(botonPreparar);
     }
 
+
+if (
+  registro.estado === "BORRADOR" &&
+  BA_BORRADORES_ELIMINABLES.has(registro.id)
+) {
+  const botonEliminar =
+    document.createElement("button");
+
+  botonEliminar.type = "button";
+  botonEliminar.className = "secondary-button";
+  botonEliminar.textContent =
+    "Eliminar borrador de prueba";
+
+  botonEliminar.addEventListener(
+    "click",
+    async () => {
+
+      const confirmado = window.confirm(
+        "¿Eliminar definitivamente este " +
+        "borrador de prueba?\n\nUUID: " +
+        registro.id
+      );
+
+      if (!confirmado) return;
+
+      botonEliminar.disabled = true;
+
+      try {
+        await eliminarBorradorPrueba(registro.id);
+        await mostrarRegistros();
+
+        mensaje(
+          "Borrador de prueba eliminado.",
+          "success"
+        );
+
+      } catch (error) {
+        mensaje(error.message, "error");
+        botonEliminar.disabled = false;
+      }
+    }
+  );
+
+  elemento.appendChild(botonEliminar);
+}
 
     contenedor.appendChild(elemento);
   }
