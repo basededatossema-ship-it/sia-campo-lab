@@ -12,7 +12,7 @@
 
 "use strict";
 
-const CACHE_NAME = "banimapp-lab-v10";
+const CACHE_NAME = "banimapp-lab-v11";
 
 const BASE_URL = new URL(
   "./",
@@ -95,31 +95,80 @@ self.addEventListener("fetch", event => {
   // Navegación: intentar red y recuperar
   // index.html cuando no haya internet.
 
+  
+  // SIA-BIENESTAR-05F.3B.7
+  // Navegación independiente sin conexión.
+
   if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
+
+        const cache = await caches.open(
+          CACHE_NAME
+        );
+
+        const ruta = url.pathname;
+        const inicio = new URL(
+          "index.html", BASE_URL
+        ).pathname;
+
+        const formularios = new URL(
+          "formularios-ba.html", BASE_URL
+        ).pathname;
+
+        let pagina = null;
+
+        if (
+          ruta === BASE_URL.pathname ||
+          ruta === inicio
+        ) {
+          pagina = new URL(
+            "index.html", BASE_URL
+          ).href;
+        } else if (ruta === formularios) {
+          pagina = new URL(
+            "formularios-ba.html", BASE_URL
+          ).href;
+        }
+
+        // Entregar directamente las páginas
+        // de la aplicación desde su caché.
+        if (pagina) {
+          const guardada = await cache.match(
+            pagina
+          );
+
+          if (guardada) {
+            return guardada;
+          }
+        }
+
+        // Recuperación cuando no existe
+        // una copia local.
         try {
-          return await fetch(request);
-        } catch (error) {
-          const cache = await caches.open(
-            CACHE_NAME
-          );
+          const respuesta = await fetch(request);
 
-          const respaldo = await cache.match(
-            new URL("index.html", BASE_URL).href
-          );
-
-          if (respaldo) {
-            return respaldo;
+          if (respuesta.ok && pagina) {
+            await cache.put(
+              pagina,
+              respuesta.clone()
+            );
           }
 
+          return respuesta;
+
+        } catch (error) {
+          // Nunca reemplazar formularios
+          // con la página principal.
           return Response.error();
         }
+
       })()
     );
 
     return;
   }
+
 
   
   // P04-B1.1
