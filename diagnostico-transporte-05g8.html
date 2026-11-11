@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+  <title>SIA - Diagnóstico 05G.8</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 620px;
+      margin: 30px auto;
+      padding: 18px;
+      line-height: 1.5;
+    }
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: #f1f3f5;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>SIA - Diagnóstico 05G.8</h2>
+
+  <p>
+    Prueba de comunicación sin credenciales,
+    sin información personal y sin escrituras.
+  </p>
+
+  <label for="endpoint">
+    URL /exec del Servicio Central
+  </label>
+
+  <input
+    id="endpoint"
+    type="url"
+    placeholder="https://script.google.com/macros/s/.../exec"
+    autocomplete="off"
+  >
+
+  <button id="probar">
+    Comprobar comunicación
+  </button>
+
+  <pre id="resultado">
+    Pendiente de ejecución.
+  </pre>
+
+  <script>
+    "use strict";
+
+    const boton = document.getElementById(
+      "probar"
+    );
+
+    const salida = document.getElementById(
+      "resultado"
+    );
+
+    boton.addEventListener("click", async () => {
+
+      const endpoint = document.getElementById(
+        "endpoint"
+      ).value.trim();
+
+      let destino;
+
+      try {
+        destino = new URL(endpoint);
+      } catch (error) {
+        salida.textContent = "URL_INVALIDA";
+        return;
+      }
+
+      if (
+        destino.protocol !== "https:" ||
+        destino.hostname !== "script.google.com" ||
+        !/^\/macros\/s\/[^/]+\/exec$/.test(
+          destino.pathname
+        )
+      ) {
+        salida.textContent =
+          "URL_DEL_SERVICIO_NO_VALIDA";
+        return;
+      }
+
+      boton.disabled = true;
+      salida.textContent =
+        "Comprobando comunicación...";
+
+      const controlador = new AbortController();
+
+      const limite = setTimeout(
+        () => controlador.abort(),
+        20000
+      );
+
+      try {
+
+        const respuesta = await fetch(
+          destino.href,
+          {
+            method: "POST",
+            redirect: "follow",
+            credentials: "omit",
+            headers: {
+              "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({
+              operacion:
+                "BA_05G8_PRUEBA_TRANSPORTE"
+            }),
+            signal: controlador.signal
+          }
+        );
+
+        const contenido = await respuesta.text();
+
+        let datos;
+
+        try {
+          datos = JSON.parse(contenido);
+        } catch (error) {
+          salida.textContent =
+            "RESPUESTA_NO_JSON\n" +
+            "HTTP: " + respuesta.status;
+          return;
+        }
+
+        salida.textContent = JSON.stringify({
+          http: respuesta.status,
+          respuestaLegible: true,
+          operacionRechazada:
+            datos.ok === false &&
+            datos.motivo ===
+              "OPERACION_NO_AUTORIZADA",
+          motivo: String(datos.motivo || "")
+        }, null, 2);
+
+      } catch (error) {
+
+        salida.textContent =
+          error.name === "AbortError"
+            ? "TIEMPO_AGOTADO"
+            : "ERROR_DE_TRANSPORTE_O_CORS";
+
+      } finally {
+        clearTimeout(limite);
+        boton.disabled = false;
+      }
+
+    });
+  </script>
+</body>
+</html>
