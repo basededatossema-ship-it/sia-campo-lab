@@ -94,6 +94,15 @@
     Inicializando autenticación Google...
   </div>
 
+  
+<p id="accesoFormularios"
+   hidden>
+  <a href="./formularios-ba.html">
+    Continuar a formularios institucionales
+  </a>
+</p>
+
+
   <p class="nota">
     Los tokens no se muestran ni se almacenan
     en el dispositivo.
@@ -145,13 +154,21 @@ function obtenerEndpoint() {
   return url.href;
 }
 
+
 async function recibirCredencial(respuestaGoogle) {
-  sessionStorage.removeItem(
-    "SIA_BA_IDENTIDAD_05G14"
-  );
+
   if (procesando) {
     return;
   }
+
+  document.getElementById(
+    "accesoFormularios"
+  ).hidden = true;
+
+  sessionStorage.removeItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
 
   let endpoint;
 
@@ -326,6 +343,16 @@ async function recibirCredencial(respuestaGoogle) {
         );
         return;
       }
+
+      
+      // Habilitar formularios únicamente
+      // después de verificar y conservar
+      // la identidad institucional.
+
+      document.getElementById(
+        "accesoFormularios"
+      ).hidden = false;
+
 
 
       mostrar(
