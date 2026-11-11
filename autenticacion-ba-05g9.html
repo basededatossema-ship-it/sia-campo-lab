@@ -176,6 +176,10 @@ async function recibirCredencial(respuestaGoogle) {
 
   procesando = true;
 
+  if (window.SIABanimResponsable) {
+    SIABanimResponsable.limpiar();
+  }
+
   mostrar(
     "Consultando autorización institucional..."
   );
