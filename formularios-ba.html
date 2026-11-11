@@ -281,13 +281,27 @@ summary {font-weight:bold;cursor:pointer}
 </section>
 
 <section class="card">
+
 <h2>Responsable institucional</h2>
+
+<div id="identidadInstitucional"
+     class="status"
+     role="status"
+     aria-live="polite">
+  Comprobando identidad institucional...
+</div>
+
 <p class="small">
-  El responsable se asociará automáticamente cuando
-  habilitemos la autenticación institucional.
-  No se admite suplantar la identidad escribiendo
-  libremente un nombre.
+  La identidad procede de una autenticación
+  institucional previa.
+
+  No se permite escribir manualmente el
+  nombre del responsable.
+
+  La vinculación al borrador local se
+  habilitará en la siguiente etapa.
 </p>
+
 
 <button id="guardarInstitucional"
         type="submit"
@@ -324,6 +338,90 @@ summary {font-weight:bold;cursor:pointer}
 "use strict";
 
 const $ = id => document.getElementById(id);
+
+/**
+ * SIA-BIENESTAR-05G.14B
+ * Lectura de identidad institucional temporal.
+ *
+ * No modifica IndexedDB.
+ * No guarda tokens.
+ * No concede permisos.
+ */
+
+let identidadFormulario = null;
+
+function cargarIdentidadInstitucional() {
+
+  const salida = $("identidadInstitucional");
+
+  identidadFormulario = null;
+
+  let datos;
+
+  try {
+
+    const almacenado = sessionStorage.getItem(
+      "SIA_BA_IDENTIDAD_05G14"
+    );
+
+    if (!almacenado) {
+      salida.textContent =
+        "IDENTIDAD NO DISPONIBLE\n" +
+        "Inicia sesión desde la pantalla " +
+        "de autenticación institucional.";
+
+      return;
+    }
+
+    datos = JSON.parse(almacenado);
+
+  } catch (error) {
+
+    salida.textContent =
+      "No fue posible leer la identidad " +
+      "institucional.";
+
+    return;
+  }
+
+  if (
+    !datos ||
+    typeof datos.usuarioId !== "string" ||
+    !datos.usuarioId.trim() ||
+    typeof datos.nombreCompleto !== "string" ||
+    !datos.nombreCompleto.trim() ||
+    datos.modulo !== "BIENESTAR_ANIMAL" ||
+    datos.permiso !== "LEER" ||
+    typeof datos.verificadoEn !== "string" ||
+    !Number.isFinite(
+      Date.parse(datos.verificadoEn)
+    )
+  ) {
+
+    salida.textContent =
+      "IDENTIDAD INSTITUCIONAL INCOMPLETA";
+
+    return;
+  }
+
+  identidadFormulario = Object.freeze({
+    usuarioId: datos.usuarioId.trim(),
+    nombreCompleto:
+      datos.nombreCompleto.trim(),
+    verificadoEn: datos.verificadoEn
+  });
+
+  salida.textContent =
+    "IDENTIDAD PREVIAMENTE VERIFICADA\n" +
+    "Responsable: " +
+      identidadFormulario.nombreCompleto + "\n" +
+    "ID institucional: " +
+      identidadFormulario.usuarioId + "\n" +
+    "Módulo: BIENESTAR_ANIMAL\n" +
+    "Permiso de referencia: LEER\n" +
+    "Sincronización: DESHABILITADA";
+
+}
 
 const GRUPOS = [
   ["Género",[
@@ -717,6 +815,7 @@ $("nuevaActividad").addEventListener(
 
 alternarTipo();
 alternarZona();
+cargarIdentidadInstitucional();
 </script>
 </body>
 </html>
