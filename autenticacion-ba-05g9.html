@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+
+  <title>SIA - Identidad Bienestar Animal</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f3f7f4;
+      font-family: system-ui, sans-serif;
+      color: #193e32;
+    }
+
+    main {
+      max-width: 480px;
+      margin: 30px auto;
+      padding: 26px;
+      background: white;
+      border: 1px solid #dbe6de;
+      border-radius: 20px;
+    }
+
+    h1 { font-size: 25px; }
+
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 14px 0;
+      font-size: 16px;
+    }
+
+    #googleButton {
+      display: flex;
+      justify-content: center;
+      min-height: 44px;
+      margin: 22px 0;
+    }
+
+    #estado {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      padding: 16px;
+      border-radius: 12px;
+      background: #e9f0eb;
+      font-size: 15px;
+    }
+
+    .nota {
+      color: #63766c;
+      font-size: 14px;
+    }
+  </style>
+
+  <script
+    src="https://accounts.google.com/gsi/client"
+    async defer>
+  </script>
+</head>
+
+<body>
+
+<main>
+  <h1>Identidad institucional SIA</h1>
+
+  <p>Bienestar Animal · Etapa 05G.9B</p>
+
+  <p class="nota">
+    Autenticación exclusiva de lectura.
+    No guarda datos ni modifica actividades.
+  </p>
+
+  <label for="endpoint">
+    URL /exec del Servicio Central
+  </label>
+
+  <input
+    id="endpoint"
+    type="url"
+    autocomplete="off"
+    placeholder="https://script.google.com/macros/s/.../exec"
+  >
+
+  <div id="googleButton"></div>
+
+  <div id="estado" role="status" aria-live="polite">
+    Inicializando autenticación Google...
+  </div>
+
+  <p class="nota">
+    Los tokens no se muestran ni se almacenan
+    en el dispositivo.
+  </p>
+</main>
+
+<script>
+"use strict";
+
+const CLIENT_ID =
+  "539376159794-mp0qjge29fhkudf2tdp9cu8knfq3qhlv.apps.googleusercontent.com";
+
+const salida = document.getElementById("estado");
+const campoURL = document.getElementById("endpoint");
+
+let procesando = false;
+
+function mostrar(mensaje) {
+  salida.textContent = mensaje;
+}
+
+function obtenerEndpoint() {
+  let url;
+
+  try {
+    url = new URL(campoURL.value.trim());
+  } catch (_) {
+    throw new Error("URL_DEL_SERVICIO_INVALIDA");
+  }
+
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "script.google.com" ||
+    !/^\/macros\/s\/[^/]+\/exec$/.test(
+      url.pathname
+    ) ||
+    url.search ||
+    url.hash ||
+    url.username ||
+    url.password
+  ) {
+    throw new Error("URL_DEL_SERVICIO_INVALIDA");
+  }
+
+  return url.href;
+}
+
+async function recibirCredencial(respuestaGoogle) {
+
+  if (procesando) {
+    return;
+  }
+
+  let endpoint;
+
+  try {
+    endpoint = obtenerEndpoint();
+  } catch (error) {
+    mostrar(
+      "Ingresa primero la URL /exec válida " +
+      "del Servicio Central."
+    );
+    return;
+  }
+
+  const idToken = respuestaGoogle &&
+    respuestaGoogle.credential;
+
+  if (
+    typeof idToken !== "string" ||
+    !idToken
+  ) {
+    mostrar("GOOGLE_NO_ENTREGO_CREDENCIAL");
+    return;
+  }
+
+  procesando = true;
+
+  mostrar(
+    "Consultando autorización institucional..."
+  );
+
+  const controlador = new AbortController();
+
+  const timeout = setTimeout(
+    () => controlador.abort(),
+    20000
+  );
+
+  try {
+    const respuesta = await fetch(endpoint, {
+      method: "POST",
+      credentials: "omit",
+      redirect: "follow",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify({
+        operacion: "AUTENTICAR_BANIMAPP",
+        idToken: idToken
+      }),
+      signal: controlador.signal
+    });
+
+    if (!respuesta.ok) {
+      mostrar(
+        "ERROR_HTTP_" + respuesta.status
+      );
+      return;
+    }
+
+    let datos;
+
+    try {
+      datos = await respuesta.json();
+    } catch (_) {
+      mostrar("RESPUESTA_NO_JSON");
+      return;
+    }
+
+    if (
+      datos.ok === true &&
+      datos.permitido === true &&
+      datos.modulo === "BIENESTAR_ANIMAL" &&
+      datos.accion === "LEER" &&
+      datos.motivo === "AUTORIZADO"
+    ) {
+      mostrar(
+        "IDENTIDAD INSTITUCIONAL AUTORIZADA\n" +
+        "Módulo: BIENESTAR_ANIMAL\n" +
+        "Permiso: LEER\n" +
+        "Sincronización: DESHABILITADA"
+      );
+    } else {
+      mostrar(
+        "ACCESO NO AUTORIZADO\n" +
+        "El Servicio Central no concedió " +
+        "permiso de lectura a Bienestar Animal."
+      );
+    }
+
+  } catch (error) {
+
+    mostrar(
+      error.name === "AbortError"
+        ? "TIEMPO_AGOTADO"
+        : "ERROR_DE_COMUNICACION"
+    );
+
+  } finally {
+    clearTimeout(timeout);
+    procesando = false;
+  }
+}
+
+function iniciarGoogle() {
+
+  if (
+    !window.google ||
+    !google.accounts ||
+    !google.accounts.id
+  ) {
+    mostrar(
+      "GOOGLE_IDENTITY_SERVICES_NO_DISPONIBLE"
+    );
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: recibirCredencial,
+    ux_mode: "popup",
+    auto_select: false
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById("googleButton"),
+    {
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      shape: "rectangular",
+      width: 260
+    }
+  );
+
+  mostrar(
+    "Introduce la URL /exec y selecciona " +
+    "Iniciar sesión con Google."
+  );
+}
+
+window.addEventListener("load", iniciarGoogle);
+</script>
+
+</body>
+</html>
