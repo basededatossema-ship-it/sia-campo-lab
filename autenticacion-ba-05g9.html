@@ -218,6 +218,7 @@ async function recibirCredencial(respuestaGoogle) {
       return;
     }
 
+    
     if (
       datos.ok === true &&
       datos.permitido === true &&
@@ -225,19 +226,87 @@ async function recibirCredencial(respuestaGoogle) {
       datos.accion === "LEER" &&
       datos.motivo === "AUTORIZADO"
     ) {
+
       mostrar(
-        "IDENTIDAD INSTITUCIONAL AUTORIZADA\n" +
+        "Autorización confirmada.\n" +
+        "Consultando responsable institucional..."
+      );
+
+      const respuestaIdentidad = await fetch(
+        endpoint,
+        {
+          method: "POST",
+          credentials: "omit",
+          redirect: "follow",
+          headers: {
+            "Content-Type": "text/plain"
+          },
+          body: JSON.stringify({
+            operacion:
+              "RESOLVER_RESPONSABLE_BANIMAPP",
+            idToken: idToken
+          }),
+          signal: controlador.signal
+        }
+      );
+
+      if (!respuestaIdentidad.ok) {
+        mostrar(
+          "IDENTIDAD_INSTITUCIONAL_NO_DISPONIBLE\n" +
+          "HTTP: " + respuestaIdentidad.status
+        );
+        return;
+      }
+
+      const datosIdentidad =
+        await respuestaIdentidad.json();
+
+      if (!window.SIABanimResponsable) {
+        mostrar("RECEPTOR_IDENTIDAD_NO_DISPONIBLE");
+        return;
+      }
+
+      const resultado =
+        SIABanimResponsable.recibir(
+          datosIdentidad
+        );
+
+      if (resultado.ok !== true) {
+        mostrar(
+          "NO SE PUDO RESOLVER EL RESPONSABLE\n" +
+          "La identidad institucional " +
+          "no fue confirmada."
+        );
+        return;
+      }
+
+      const responsable =
+        SIABanimResponsable.consultar();
+
+      mostrar(
+        "IDENTIDAD INSTITUCIONAL AUTORIZADA\n\n" +
+        "Responsable: " +
+          responsable.nombreCompleto + "\n" +
+        "ID institucional: " +
+          responsable.usuarioId + "\n" +
         "Módulo: BIENESTAR_ANIMAL\n" +
         "Permiso: LEER\n" +
         "Sincronización: DESHABILITADA"
       );
+
     } else {
+
+      if (window.SIABanimResponsable) {
+        SIABanimResponsable.limpiar();
+      }
+
       mostrar(
         "ACCESO NO AUTORIZADO\n" +
         "El Servicio Central no concedió " +
         "permiso de lectura a Bienestar Animal."
       );
     }
+
 
   } catch (error) {
 
