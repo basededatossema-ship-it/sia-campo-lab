@@ -423,6 +423,49 @@ function cargarIdentidadInstitucional() {
 
 }
 
+      
+function cargarAutorParaGuardado05G14C() {
+
+  if (!identidadFormulario) {
+    throw new Error(
+      "IDENTIDAD_INSTITUCIONAL_REQUERIDA"
+    );
+  }
+
+  let datos;
+
+  try {
+    datos = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+  } catch (error) {
+    throw new Error(
+      "IDENTIDAD_LOCAL_INVALIDA"
+    );
+  }
+
+  if (
+    !datos ||
+    datos.modulo !== "BIENESTAR_ANIMAL" ||
+    datos.permiso !== "LEER" ||
+    datos.usuarioId !==
+      identidadFormulario.usuarioId ||
+    datos.nombreCompleto !==
+      identidadFormulario.nombreCompleto ||
+    datos.verificadoEn !==
+      identidadFormulario.verificadoEn
+  ) {
+    throw new Error(
+      "IDENTIDAD_LOCAL_NO_COINCIDE"
+    );
+  }
+
+  return { ...identidadFormulario };
+}
+
+
 const GRUPOS = [
   ["Género",[
     ["femenino","Femenino"],
@@ -726,6 +769,27 @@ async function validarFormulario(evento) {
     registro.formularioVersion = "BA-05F";
     registro.estado = "BORRADOR";
     registro.origen = "SIA_BA_FORMULARIO_LAB";
+      
+    // SIA-BIENESTAR-05G.14C
+    // Autoría del nuevo borrador.
+    // No autoriza sincronización.
+
+    const identidadSesion =
+      cargarAutorParaGuardado05G14C();
+
+    registro.responsable =
+      identidadSesion.nombreCompleto;
+
+    registro.autoriaInstitucional = {
+      usuarioId: identidadSesion.usuarioId,
+      nombreCompleto:
+        identidadSesion.nombreCompleto,
+      modulo: "BIENESTAR_ANIMAL",
+      verificadoEn:
+        identidadSesion.verificadoEn,
+      origen: "IDENTIDAD_LOCAL_PREVIAMENTE_VERIFICADA"
+    };
+
 
     registro.fecha =
       registro.tipo === "VISITA_TECNICA"
@@ -735,7 +799,7 @@ async function validarFormulario(evento) {
     registro.lugar =
       registro.formulario.ubicacion.lugar;
 
-    registro.responsable = "";
+   
 
     const guardado =
       await SIABanimAlmacenamiento.guardar(
