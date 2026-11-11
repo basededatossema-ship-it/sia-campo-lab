@@ -146,7 +146,9 @@ function obtenerEndpoint() {
 }
 
 async function recibirCredencial(respuestaGoogle) {
-
+  sessionStorage.removeItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
   if (procesando) {
     return;
   }
@@ -286,6 +288,45 @@ async function recibirCredencial(respuestaGoogle) {
 
       const responsable =
         SIABanimResponsable.consultar();
+
+      
+      // SIA-BIENESTAR-05G.14A
+      // Transferencia temporal de identidad
+      // verificada hacia los formularios.
+
+      if (
+        !responsable ||
+        !responsable.usuarioId ||
+        !responsable.nombreCompleto ||
+        responsable.modulo !== "BIENESTAR_ANIMAL" ||
+        responsable.permiso !== "LEER"
+      ) {
+        mostrar(
+          "IDENTIDAD_INSTITUCIONAL_INCOMPLETA"
+        );
+        return;
+      }
+
+      try {
+        sessionStorage.setItem(
+          "SIA_BA_IDENTIDAD_05G14",
+          JSON.stringify({
+            usuarioId: responsable.usuarioId,
+            nombreCompleto:
+              responsable.nombreCompleto,
+            modulo: responsable.modulo,
+            permiso: responsable.permiso,
+            verificadoEn: responsable.verificadoEn
+          })
+        );
+      } catch (error) {
+        mostrar(
+          "No fue posible preparar la " +
+          "identidad para los formularios."
+        );
+        return;
+      }
+
 
       mostrar(
         "IDENTIDAD INSTITUCIONAL AUTORIZADA\n\n" +
