@@ -512,9 +512,18 @@ function usuarioListado05G16B() {
 }
 
 
+
 async function mostrarRegistros() {
 
-  
+  // SIA-BIENESTAR-05G.16C
+  // Limpiar siempre la lista antes de
+  // comprobar la identidad institucional.
+
+  const contenedor = $("registros");
+  contenedor.replaceChildren();
+
+  $("contador").textContent =
+    "Verificando identidad institucional...";
 
   const usuarioId = usuarioListado05G16B();
 
@@ -528,6 +537,7 @@ async function mostrarRegistros() {
   }
 
   const todos = await consultarRegistros();
+
 
   const registros = todos.filter(registro =>
     registro.formularioVersion === "BA-05F" &&
@@ -559,10 +569,7 @@ async function mostrarRegistros() {
     pendientes + " pendiente(s).";
 
 
-  const contenedor = $("registros");
-  contenedor.replaceChildren();
-
-  for (const registro of registros) {
+    for (const registro of registros) {
     const elemento = document.createElement("div");
     elemento.className = "record";
 
@@ -704,6 +711,46 @@ if (
     contenedor.appendChild(elemento);
   }
 }
+
+/**
+ * SIA-BIENESTAR-05G.16C
+ *
+ * Revalidar la visualizacion cuando
+ * la pagina vuelva a estar activa.
+ */
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+    if (
+      document.visibilityState === "visible" &&
+      db
+    ) {
+      mostrarRegistros().catch(() => {
+        $("registros").replaceChildren();
+        $("contador").textContent =
+          "No fue posible verificar los registros.";
+      });
+    }
+  }
+);
+
+window.addEventListener(
+  "storage",
+  event => {
+    if (
+      event.key ===
+      "SIA_BA_IDENTIDAD_OFFLINE_05G15" &&
+      db
+    ) {
+      mostrarRegistros().catch(() => {
+        $("registros").replaceChildren();
+        $("contador").textContent =
+          "No fue posible verificar los registros.";
+      });
+    }
+  }
+);
 
 async function guardarFormulario(evento) {
   evento.preventDefault();
