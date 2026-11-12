@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+<title>SIA - Diagnóstico de autoría 05G.16</title>
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #F3F7F5;
+  color: #153E37;
+  padding: 20px;
+  max-width: 620px;
+  margin: auto;
+}
+pre {
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  white-space: pre-wrap;
+}
+</style>
+</head>
+<body>
+
+<h2>SIA - Protección de autoría</h2>
+<p>Etapa 05G.16A · Diagnóstico local</p>
+
+<pre id="resultado">
+  Pendiente de consulta.
+</pre>
+
+<script>
+"use strict";
+
+const salida = document.getElementById(
+  "resultado"
+);
+
+let usuarioActual = null;
+
+try {
+  const identidad = JSON.parse(
+    sessionStorage.getItem(
+      "SIA_BA_IDENTIDAD_05G14"
+    ) || "null"
+  );
+
+  if (
+    identidad &&
+    identidad.modulo === "BIENESTAR_ANIMAL" &&
+    typeof identidad.usuarioId === "string" &&
+    identidad.usuarioId.trim()
+  ) {
+    usuarioActual = identidad.usuarioId.trim();
+  }
+} catch (_) {
+  usuarioActual = null;
+}
+
+const solicitud = indexedDB.open(
+  "SIA_CAMPO_PWA_LAB", 1
+);
+
+solicitud.onupgradeneeded = () => {
+  solicitud.transaction.abort();
+};
+
+solicitud.onerror = () => {
+  salida.textContent =
+    "BASE_LOCAL_NO_DISPONIBLE";
+};
+
+solicitud.onsuccess = () => {
+
+  const db = solicitud.result;
+
+  if (!db.objectStoreNames.contains("borradores")) {
+    salida.textContent =
+      "ALMACEN_NO_DISPONIBLE";
+    db.close();
+    return;
+  }
+
+  const tx = db.transaction(
+    "borradores", "readonly"
+  );
+
+  const consulta = tx.objectStore(
+    "borradores"
+  ).getAll();
+
+  consulta.onsuccess = () => {
+
+    const registros = consulta.result;
+
+    const resultado = {
+      identidadTemporalDisponible:
+        !!usuarioActual,
+      totalRegistros: registros.length,
+      institucionalesConAutor: 0,
+      institucionalesSinAutor: 0,
+      institucionalesDelUsuario: 0,
+      institucionalesDeOtroUsuario: 0,
+      registrosExperimentalesAnteriores: 0
+    };
+
+    for (const registro of registros) {
+
+      if (registro.formularioVersion !== "BA-05F") {
+        resultado.registrosExperimentalesAnteriores++;
+        continue;
+      }
+
+      const autor =
+        registro.autoriaInstitucional;
+
+      if (
+        !autor ||
+        typeof autor.usuarioId !== "string" ||
+        !autor.usuarioId.trim()
+      ) {
+        resultado.institucionalesSinAutor++;
+        continue;
+      }
+
+      resultado.institucionalesConAutor++;
+
+      if (usuarioActual) {
+        if (autor.usuarioId === usuarioActual) {
+          resultado.institucionalesDelUsuario++;
+        } else {
+          resultado.institucionalesDeOtroUsuario++;
+        }
+      }
+    }
+
+    salida.textContent = JSON.stringify(
+      resultado,
+      null,
+      2
+    );
+  };
+
+  consulta.onerror = () => {
+    salida.textContent =
+      "CONSULTA_LOCAL_FALLIDA";
+  };
+
+  tx.oncomplete = () => db.close();
+
+  tx.onabort = () => {
+    salida.textContent =
+      "CONSULTA_CANCELADA";
+    db.close();
+  };
+};
+</script>
+</body>
+</html>
