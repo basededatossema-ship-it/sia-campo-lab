@@ -291,6 +291,13 @@ summary {font-weight:bold;cursor:pointer}
   Comprobando identidad institucional...
 </div>
 
+<button id="recuperarIdentidad"
+        type="button"
+        class="hidden"
+        style="width:100%;margin-top:12px">
+  Confirmar mi identidad local
+</button>
+
 
 <p class="small">
   El responsable institucional se asociará
@@ -338,6 +345,7 @@ summary {font-weight:bold;cursor:pointer}
 
 <script src="./contrato-ba.js"></script>
 <script src="./almacenamiento-ba.js"></script>
+<script src="./identidad-offline-ba-05g15.js"></script>
 <script>
 "use strict";
 
@@ -427,6 +435,121 @@ function cargarIdentidadInstitucional() {
 
 }
 
+
+/**
+ * SIA-BIENESTAR-05G.15C
+ * Recuperacion local con confirmacion.
+ *
+ * No autentica ni autoriza escrituras.
+ */
+
+function prepararRecuperacion05G15C() {
+
+  const boton = $("recuperarIdentidad");
+  boton.classList.add("hidden");
+
+  // Una identidad de sesion existente
+  // conserva el procedimiento anterior.
+  if (identidadFormulario) {
+    return;
+  }
+
+  if (!window.SIABanimIdentidadOffline) {
+    return;
+  }
+
+  const local =
+    SIABanimIdentidadOffline.consultar();
+
+  if (!local) {
+    return;
+  }
+
+  $("identidadInstitucional").textContent =
+    "REFERENCIA LOCAL DISPONIBLE\n" +
+    "Responsable: " + local.nombreCompleto + "\n" +
+    "ID institucional: " + local.usuarioId + "\n" +
+    "Esta referencia no demuestra una " +
+    "autenticacion vigente.\n" +
+    "Confirma que eres el funcionario " +
+    "indicado para continuar.";
+
+  boton.classList.remove("hidden");
+}
+
+
+function recuperarIdentidad05G15C() {
+
+  if (!window.SIABanimIdentidadOffline) {
+    return;
+  }
+
+  const local =
+    SIABanimIdentidadOffline.consultar();
+
+  if (!local) {
+    $("identidadInstitucional").textContent =
+      "REFERENCIA LOCAL NO DISPONIBLE O VENCIDA";
+
+    $("recuperarIdentidad").classList.add(
+      "hidden"
+    );
+    return;
+  }
+
+  const confirmado = window.confirm(
+    "¿Confirmas que eres el funcionario " +
+    local.nombreCompleto + " (" +
+    local.usuarioId + ")?\n\n" +
+    "Esta confirmacion solo permite " +
+    "continuar con capturas locales. " +
+    "No es una nueva autenticacion " +
+    "ni autoriza sincronizacion."
+  );
+
+  if (!confirmado) {
+    return;
+  }
+
+  // Comprobar de nuevo la referencia.
+  const actual =
+    SIABanimIdentidadOffline.consultar();
+
+  if (
+    !actual ||
+    actual.usuarioId !== local.usuarioId ||
+    actual.nombreCompleto !==
+      local.nombreCompleto ||
+    actual.verificadoEn !==
+      local.verificadoEn
+  ) {
+    $("identidadInstitucional").textContent =
+      "IDENTIDAD_LOCAL_CAMBIO_DURANTE_CONFIRMACION";
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(
+      "SIA_BA_IDENTIDAD_05G14",
+      JSON.stringify(actual)
+    );
+  } catch (error) {
+    $("identidadInstitucional").textContent =
+      "NO_SE_PUDO_RECUPERAR_IDENTIDAD";
+    return;
+  }
+
+  cargarIdentidadInstitucional();
+
+  if (identidadFormulario) {
+    $("identidadInstitucional").textContent +=
+      "\nModo: REFERENCIA LOCAL RECUPERADA";
+  }
+
+  $("recuperarIdentidad").classList.add(
+    "hidden"
+  );
+}
       
 function cargarAutorParaGuardado05G14C() {
 
@@ -881,9 +1004,18 @@ $("nuevaActividad").addEventListener(
   iniciarNuevaActividad
 );
 
+
 alternarTipo();
 alternarZona();
+
+$("recuperarIdentidad").addEventListener(
+  "click",
+  recuperarIdentidad05G15C
+);
+
 cargarIdentidadInstitucional();
+prepararRecuperacion05G15C();
+
 </script>
 </body>
 </html>
