@@ -114,7 +114,10 @@
 
 </main>
 
+
 <script src="./responsable-ba-05g12.js"></script>
+<script src="./identidad-offline-ba-05g15.js"></script>
+
 
 <script>
 "use strict";
@@ -349,6 +352,51 @@ async function recibirCredencial(respuestaGoogle) {
       }
 
       
+      // SIA-BIENESTAR-05G.15B
+      // Conservar referencia local de identidad
+      // despues de autenticacion institucional.
+
+      if (!window.SIABanimIdentidadOffline) {
+        sessionStorage.removeItem(
+          "SIA_BA_IDENTIDAD_05G14"
+        );
+
+        mostrar(
+          "COMPONENTE_IDENTIDAD_OFFLINE_NO_DISPONIBLE"
+        );
+        return;
+      }
+
+      try {
+        SIABanimIdentidadOffline.conservar(
+          responsable
+        );
+      } catch (error) {
+
+        sessionStorage.removeItem(
+          "SIA_BA_IDENTIDAD_05G14"
+        );
+
+        if (
+          error.message ===
+          "CAMBIO_DE_FUNCIONARIO_REQUIERE_REVISION"
+        ) {
+          mostrar(
+            "CAMBIO DE FUNCIONARIO DETECTADO\n" +
+            "Este dispositivo conserva una " +
+            "referencia local de otro usuario.\n" +
+            "Se requiere revisión antes de " +
+            "continuar."
+          );
+        } else {
+          mostrar(
+            "NO_SE_PUDO_CONSERVAR_IDENTIDAD_LOCAL"
+          );
+        }
+
+        return;
+      }
+
       // Habilitar formularios únicamente
       // después de verificar y conservar
       // la identidad institucional.
