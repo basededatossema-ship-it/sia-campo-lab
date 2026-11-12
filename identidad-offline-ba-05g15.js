@@ -198,12 +198,13 @@
   }
 
 
+  
   window.SIABanimIdentidadOffline =
     Object.freeze({
-      version: "05G.15A",
+      version: "05G.16D.1",
       consultar,
       conservar,
+      cambiarFuncionario,
       limpiar
     });
 
-})();
