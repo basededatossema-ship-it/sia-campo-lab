@@ -83,6 +83,63 @@
     };
   }
 
+  /**
+   * SIA-BIENESTAR-05G.16D.3
+   *
+   * Identifica al titular de la referencia
+   * local aunque hayan pasado 72 horas.
+   *
+   * NO autentica ni autoriza.
+   * NO recupera sesiones vencidas.
+   */
+
+  function consultarTitular() {
+
+    const contenido =
+      localStorage.getItem(CLAVE);
+
+    if (contenido === null) {
+      return null;
+    }
+
+    let identidad;
+
+    try {
+      identidad = JSON.parse(contenido);
+    } catch (error) {
+      throw new Error(
+        "REFERENCIA_LOCAL_REQUIERE_REVISION"
+      );
+    }
+
+    if (
+      !identidad ||
+      typeof identidad !== "object" ||
+      Array.isArray(identidad) ||
+      !texto(identidad.usuarioId) ||
+      !texto(identidad.nombreCompleto) ||
+      identidad.modulo !== "BIENESTAR_ANIMAL" ||
+      identidad.permiso !== "LEER" ||
+      typeof identidad.verificadoEn !== "string" ||
+      !Number.isFinite(
+        Date.parse(identidad.verificadoEn)
+      )
+    ) {
+      throw new Error(
+        "REFERENCIA_LOCAL_REQUIERE_REVISION"
+      );
+    }
+
+    return {
+      usuarioId: texto(identidad.usuarioId),
+      nombreCompleto:
+        texto(identidad.nombreCompleto),
+      modulo: "BIENESTAR_ANIMAL",
+      permiso: "LEER",
+      verificadoEn: identidad.verificadoEn
+    };
+  }
+
   function conservar(identidad) {
 
     if (!validar(identidad)) {
@@ -91,7 +148,7 @@
       );
     }
 
-    const existente = consultar();
+    const existente = consultarTitular();
 
     if (
       existente &&
@@ -151,7 +208,7 @@
       );
     }
 
-    const anterior = consultar();
+    const anterior = consultarTitular();
 
     if (
       !anterior ||
