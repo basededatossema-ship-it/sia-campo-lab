@@ -258,8 +258,9 @@
   
   window.SIABanimIdentidadOffline =
     Object.freeze({
-      version: "05G.16D.1",
+      version: "05G.16D.3",
       consultar,
+      consultarTitular,
       conservar,
       cambiarFuncionario,
       limpiar
