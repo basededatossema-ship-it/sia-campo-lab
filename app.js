@@ -536,10 +536,32 @@ async function mostrarRegistros() {
     return;
   }
 
+  
   const todos = await consultarRegistros();
 
+  // SIA-BIENESTAR-05G.16C.1
+  // Comprobar nuevamente la identidad
+  // despues de la lectura de IndexedDB.
+
+  const usuarioConfirmado =
+    usuarioListado05G16B();
+
+  if (
+    !usuarioConfirmado ||
+    usuarioConfirmado !== usuarioId
+  ) {
+    contenedor.replaceChildren();
+
+    $("contador").textContent =
+      "IDENTIDAD INSTITUCIONAL CAMBIADA. " +
+      "Vuelve a confirmar tu identidad " +
+      "antes de consultar los registros.";
+
+    return;
+  }
 
   const registros = todos.filter(registro =>
+
     registro.formularioVersion === "BA-05F" &&
     registro.autoriaInstitucional &&
     registro.autoriaInstitucional.usuarioId ===
