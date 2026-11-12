@@ -126,6 +126,78 @@
     localStorage.removeItem(CLAVE);
   }
 
+  
+  /**
+   * SIA-BIENESTAR-05G.16D.1
+   *
+   * Sustitucion controlada de referencia local.
+   *
+   * Debe invocarse solamente despues de:
+   * - Nueva verificacion Google.
+   * - Autorizacion del Servicio Central.
+   * - Confirmacion expresa del cambio.
+   *
+   * No modifica registros ni IndexedDB.
+   */
+
+  function cambiarFuncionario(
+    nuevaIdentidad,
+    usuarioAnteriorId
+  ) {
+
+    if (!validar(nuevaIdentidad)) {
+      throw new Error(
+        "NUEVA_IDENTIDAD_INVALIDA"
+      );
+    }
+
+    const anterior = consultar();
+
+    if (
+      !anterior ||
+      anterior.usuarioId !== usuarioAnteriorId
+    ) {
+      throw new Error(
+        "IDENTIDAD_ANTERIOR_NO_COINCIDE"
+      );
+    }
+
+    const nuevoId = texto(
+      nuevaIdentidad.usuarioId
+    );
+
+    if (nuevoId === anterior.usuarioId) {
+      throw new Error(
+        "NO_EXISTE_CAMBIO_DE_FUNCIONARIO"
+      );
+    }
+
+    const referencia = {
+      usuarioId: nuevoId,
+      nombreCompleto:
+        texto(nuevaIdentidad.nombreCompleto),
+      modulo: "BIENESTAR_ANIMAL",
+      permiso: "LEER",
+      verificadoEn: nuevaIdentidad.verificadoEn
+    };
+
+    // Sustituye una sola referencia local.
+    // Si falla la escritura, no se elimina
+    // previamente la identidad anterior.
+
+    localStorage.setItem(
+      CLAVE,
+      JSON.stringify(referencia)
+    );
+
+    return {
+      ok: true,
+      cambiado: true,
+      usuarioId: nuevoId
+    };
+  }
+
+
   window.SIABanimIdentidadOffline =
     Object.freeze({
       version: "05G.15A",
