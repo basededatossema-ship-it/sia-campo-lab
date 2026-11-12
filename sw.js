@@ -12,7 +12,7 @@
 
 "use strict";
 
-const CACHE_NAME = "banimapp-lab-v13";
+const CACHE_NAME = "banimapp-lab-v14";
 
 const BASE_URL = new URL(
   "./",
@@ -25,6 +25,7 @@ const APP_SHELL = [
   "app.js",
   "contrato-ba.js",
   "almacenamiento-ba.js",
+  "identidad-offline-ba-05g15.js",
   "formularios-ba.html",
   "manifest.webmanifest",
   "banimapp-icon-180.png",
