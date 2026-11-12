@@ -514,8 +514,7 @@ function usuarioListado05G16B() {
 
 async function mostrarRegistros() {
 
-  const contenedor = $("registros");
-  contenedor.replaceChildren();
+  
 
   const usuarioId = usuarioListado05G16B();
 
