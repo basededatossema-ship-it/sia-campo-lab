@@ -367,35 +367,109 @@ async function recibirCredencial(respuestaGoogle) {
         return;
       }
 
+      
+      // SIA-BIENESTAR-05G.16D.2
+      // Cambio de funcionario tras nueva
+      // autenticacion institucional.
+
       try {
-        SIABanimIdentidadOffline.conservar(
-          responsable
-        );
+
+        const anterior =
+          SIABanimIdentidadOffline.consultar();
+
+        if (
+          anterior &&
+          anterior.usuarioId !==
+            responsable.usuarioId
+        ) {
+
+          const confirmado = window.confirm(
+            "CAMBIO DE FUNCIONARIO\n\n" +
+            "Funcionario anterior:\n" +
+            anterior.nombreCompleto + "\n" +
+            anterior.usuarioId + "\n\n" +
+            "Nuevo funcionario:\n" +
+            responsable.nombreCompleto + "\n" +
+            responsable.usuarioId + "\n\n" +
+            "¿Confirmas cambiar la identidad " +
+            "activa de este dispositivo?\n\n" +
+            "Los borradores existentes " +
+            "conservaran su autor original."
+          );
+
+          if (!confirmado) {
+            sessionStorage.removeItem(
+              "SIA_BA_IDENTIDAD_05G14"
+            );
+
+            SIABanimResponsable.limpiar();
+
+            mostrar(
+              "CAMBIO DE FUNCIONARIO CANCELADO\n" +
+              "No se modifico la identidad " +
+              "local anterior."
+            );
+
+            return;
+          }
+
+          SIABanimIdentidadOffline
+            .cambiarFuncionario(
+              responsable,
+              anterior.usuarioId
+            );
+
+        } else {
+
+          // Primera autenticacion o
+          // mismo funcionario.
+          SIABanimIdentidadOffline.conservar(
+            responsable
+          );
+        }
+
       } catch (error) {
 
         sessionStorage.removeItem(
           "SIA_BA_IDENTIDAD_05G14"
         );
 
-        if (
-          error.message ===
-          "CAMBIO_DE_FUNCIONARIO_REQUIERE_REVISION"
-        ) {
-          mostrar(
-            "CAMBIO DE FUNCIONARIO DETECTADO\n" +
-            "Este dispositivo conserva una " +
-            "referencia local de otro usuario.\n" +
-            "Se requiere revisión antes de " +
-            "continuar."
-          );
-        } else {
-          mostrar(
-            "NO_SE_PUDO_CONSERVAR_IDENTIDAD_LOCAL"
-          );
-        }
+        SIABanimResponsable.limpiar();
+
+        mostrar(
+          "NO_SE_PUDO_ACTUALIZAR_IDENTIDAD\n" +
+          "El cambio no fue completado."
+        );
 
         return;
       }
+
+      // Confirmar coherencia entre la
+      // referencia local y la nueva identidad.
+
+      const identidadActiva =
+        SIABanimIdentidadOffline.consultar();
+
+      if (
+        !identidadActiva ||
+        identidadActiva.usuarioId !==
+          responsable.usuarioId ||
+        identidadActiva.verificadoEn !==
+          responsable.verificadoEn
+      ) {
+        sessionStorage.removeItem(
+          "SIA_BA_IDENTIDAD_05G14"
+        );
+
+        SIABanimResponsable.limpiar();
+
+        mostrar(
+          "IDENTIDAD_ACTIVA_NO_COINCIDE"
+        );
+
+        return;
+      }
+
 
       // Habilitar formularios únicamente
       // después de verificar y conservar
