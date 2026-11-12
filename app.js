@@ -449,8 +449,95 @@ function eliminarBorradorPrueba(uuid) {
   });
 }
 
+/**
+ * SIA-BIENESTAR-05G.16B
+ * Identidad para visualizar borradores.
+ *
+ * No autentica.
+ * No modifica registros.
+ * No concede permisos.
+ */
+
+function usuarioListado05G16B() {
+
+  try {
+    const sesion = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
+    const referencia = JSON.parse(
+      localStorage.getItem(
+        "SIA_BA_IDENTIDAD_OFFLINE_05G15"
+      ) || "null"
+    );
+
+    if (!sesion || !referencia) {
+      return null;
+    }
+
+    const fecha = Date.parse(
+      referencia.verificadoEn
+    );
+
+    const antiguedad = Date.now() - fecha;
+
+    if (
+      typeof sesion.usuarioId !== "string" ||
+      !sesion.usuarioId.trim() ||
+      typeof sesion.nombreCompleto !== "string" ||
+      !sesion.nombreCompleto.trim() ||
+      sesion.modulo !== "BIENESTAR_ANIMAL" ||
+      sesion.permiso !== "LEER" ||
+      referencia.modulo !== "BIENESTAR_ANIMAL" ||
+      referencia.permiso !== "LEER" ||
+      sesion.usuarioId !== referencia.usuarioId ||
+      sesion.nombreCompleto !==
+        referencia.nombreCompleto ||
+      sesion.verificadoEn !==
+        referencia.verificadoEn ||
+      !Number.isFinite(fecha) ||
+      antiguedad < 0 ||
+      antiguedad > 72 * 60 * 60 * 1000
+    ) {
+      return null;
+    }
+
+    return sesion.usuarioId.trim();
+
+  } catch (error) {
+    return null;
+  }
+}
+
+
 async function mostrarRegistros() {
-  const registros = await consultarRegistros();
+
+  const contenedor = $("registros");
+  contenedor.replaceChildren();
+
+  const usuarioId = usuarioListado05G16B();
+
+  if (!usuarioId) {
+    $("contador").textContent =
+      "IDENTIDAD INSTITUCIONAL REQUERIDA. " +
+      "Autentícate o confirma tu identidad " +
+      "local desde los formularios.";
+
+    return;
+  }
+
+  const todos = await consultarRegistros();
+
+  const registros = todos.filter(registro =>
+    registro.formularioVersion === "BA-05F" &&
+    registro.autoriaInstitucional &&
+    registro.autoriaInstitucional.usuarioId ===
+      usuarioId
+  );
+
+
 
   registros.sort((a, b) =>
     String(b.creadoEn || "").localeCompare(
