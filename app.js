@@ -572,7 +572,7 @@ function actualizarIdentidadPanel05G18B() {
 
 
 async function mostrarRegistros() {
-
+  actualizarIdentidadPanel05G18B();
   // SIA-BIENESTAR-05G.16C
   // Limpiar siempre la lista antes de
   // comprobar la identidad institucional.
@@ -954,6 +954,7 @@ async function verificarServiceWorker() {
 
 async function iniciarAplicacion() {
   actualizarConexion();
+  actualizarIdentidadPanel05G18B();
 
   window.addEventListener(
     "online",
