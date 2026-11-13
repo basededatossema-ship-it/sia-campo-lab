@@ -596,6 +596,24 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
     );
   });
 
+window.addEventListener("pageshow", function () {
+
+  const identidad = sessionStorage.getItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
+  const acceso = sessionStorage.getItem(
+    "SIA_BA_ACCESO_GOOGLE_05G19A"
+  );
+
+  if (!identidad || !acceso) {
+    window.location.replace(
+      "./autenticacion-ba-05g9.html"
+    );
+  }
+
+});
+
 })();
 </script>
 
