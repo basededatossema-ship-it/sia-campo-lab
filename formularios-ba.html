@@ -1047,6 +1047,84 @@ $("recuperarIdentidad").addEventListener(
   recuperarIdentidad05G15C
 );
 
+/**
+ * SIA-BIENESTAR-05G.16D.5
+ *
+ * Detectar cambios de identidad mientras
+ * el formulario permanece abierto.
+ *
+ * No modifica IndexedDB.
+ * No elimina datos del formulario.
+ */
+
+function verificarTitularFormulario05G16D5() {
+
+  if (!identidadFormulario) {
+    return;
+  }
+
+  const identidadLocal =
+    window.SIABanimIdentidadOffline
+      ? SIABanimIdentidadOffline.consultar()
+      : null;
+
+  if (
+    identidadLocal &&
+    identidadLocal.usuarioId ===
+      identidadFormulario.usuarioId &&
+    identidadLocal.nombreCompleto ===
+      identidadFormulario.nombreCompleto &&
+    identidadLocal.verificadoEn ===
+      identidadFormulario.verificadoEn
+  ) {
+    return;
+  }
+
+  // Invalidar únicamente la referencia
+  // temporal de este formulario.
+
+  identidadFormulario = null;
+
+  sessionStorage.removeItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
+  $("guardarInstitucional").disabled = true;
+
+  $("identidadInstitucional").textContent =
+    "IDENTIDAD INSTITUCIONAL NO VIGENTE\n" +
+    "La referencia activa cambio o vencio.\n" +
+    "Debes volver a identificarte antes " +
+    "de guardar una actividad.\n" +
+    "Los datos diligenciados permanecen " +
+    "en este formulario.";
+
+  $("resultado").textContent =
+    "Guardado bloqueado por cambio " +
+    "o vencimiento de identidad.";
+}
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+    if (document.visibilityState === "visible") {
+      verificarTitularFormulario05G16D5();
+    }
+  }
+);
+
+window.addEventListener(
+  "storage",
+  event => {
+    if (
+      event.key ===
+      "SIA_BA_IDENTIDAD_OFFLINE_05G15"
+    ) {
+      verificarTitularFormulario05G16D5();
+    }
+  }
+);
+
 cargarIdentidadInstitucional();
 prepararRecuperacion05G15C();
 
