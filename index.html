@@ -591,9 +591,46 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
       "SIA_BA_ACCESO_GOOGLE_05G19A"
     );
 
+    // SIA-BIENESTAR-05G.19E.1
+    // Avisar a otras pestañas del cierre.
+
+    try {
+      localStorage.setItem(
+        "SIA_BA_AVISO_CIERRE_05G19E",
+        String(Date.now()) + "-" +
+          Math.random().toString(36).slice(2)
+      );
+    } catch (error) {
+      console.warn(
+        "No fue posible comunicar el cierre."
+      );
+    }
+
     window.location.replace(
       "./autenticacion-ba-05g9.html"
     );
+    
+window.addEventListener("storage", function (event) {
+  if (
+    event.key !==
+    "SIA_BA_AVISO_CIERRE_05G19E"
+  ) {
+    return;
+  }
+
+  sessionStorage.removeItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
+  sessionStorage.removeItem(
+    "SIA_BA_ACCESO_GOOGLE_05G19A"
+  );
+
+  window.location.replace(
+    "./autenticacion-ba-05g9.html"
+  );
+});
+
   });
 
 window.addEventListener("pageshow", function () {
