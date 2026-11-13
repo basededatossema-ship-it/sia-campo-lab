@@ -512,6 +512,64 @@ function usuarioListado05G16B() {
 }
 
 
+/**
+ * SIA-BIENESTAR-05G.18B
+ * Presentacion de identidad institucional.
+ *
+ * No autentica ni modifica almacenamiento.
+ */
+
+function actualizarIdentidadPanel05G18B() {
+
+  const salida = $("identidadPanel05G18B");
+
+  if (!salida) return;
+
+  // Reutilizar el control de identidad
+  // ya implementado para la lista personal.
+
+  const usuarioId = usuarioListado05G16B();
+
+  if (!usuarioId) {
+    salida.textContent =
+      "IDENTIDAD INSTITUCIONAL REQUERIDA\n" +
+      "Accede con Google o confirma tu " +
+      "identidad local desde los formularios.";
+    return;
+  }
+
+  try {
+    const identidad = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
+    if (
+      !identidad ||
+      identidad.usuarioId !== usuarioId
+    ) {
+      throw new Error(
+        "IDENTIDAD_NO_COINCIDE"
+      );
+    }
+
+    salida.textContent =
+      "IDENTIDAD LOCAL ACTIVA\n" +
+      "Responsable: " +
+      identidad.nombreCompleto + "\n" +
+      "ID institucional: " +
+      usuarioId + "\n" +
+      "Módulo: BIENESTAR_ANIMAL\n" +
+      "Permiso de referencia: LEER\n" +
+      "Sincronización: DESHABILITADA";
+
+  } catch (error) {
+    salida.textContent =
+      "IDENTIDAD INSTITUCIONAL REQUERIDA";
+  }
+}
+
 
 async function mostrarRegistros() {
 
