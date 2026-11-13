@@ -8,6 +8,87 @@
 <meta name="theme-color" content="#153E37">
 <title>banimApp | Formularios Bienestar Animal</title>
 
+<!-- SIA-BIENESTAR-05G.19E.2 -->
+<!-- Control de entrada a formularios -->
+
+<style>
+html:not(.sia-formulario-autorizado) body {
+  visibility: hidden !important;
+}
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  let autorizado = false;
+
+  try {
+    const identidad = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
+    const acceso = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_ACCESO_GOOGLE_05G19A"
+      ) || "null"
+    );
+
+    const referencia = JSON.parse(
+      localStorage.getItem(
+        "SIA_BA_IDENTIDAD_OFFLINE_05G15"
+      ) || "null"
+    );
+
+    const fecha = Date.parse(
+      referencia && referencia.verificadoEn
+    );
+
+    const antiguedad = Date.now() - fecha;
+
+    autorizado = Boolean(
+      identidad &&
+      acceso &&
+      referencia &&
+      typeof identidad.usuarioId === "string" &&
+      identidad.usuarioId.trim() &&
+      typeof identidad.nombreCompleto === "string" &&
+      identidad.nombreCompleto.trim() &&
+      identidad.modulo === "BIENESTAR_ANIMAL" &&
+      identidad.permiso === "LEER" &&
+      identidad.usuarioId === acceso.usuarioId &&
+      identidad.usuarioId === referencia.usuarioId &&
+      identidad.nombreCompleto ===
+        referencia.nombreCompleto &&
+      identidad.verificadoEn ===
+        acceso.verificadoEn &&
+      identidad.verificadoEn ===
+        referencia.verificadoEn &&
+      referencia.modulo === "BIENESTAR_ANIMAL" &&
+      referencia.permiso === "LEER" &&
+      Number.isFinite(fecha) &&
+      antiguedad >= 0 &&
+      antiguedad <= 72 * 60 * 60 * 1000
+    );
+
+  } catch (error) {
+    autorizado = false;
+  }
+
+  if (autorizado) {
+    document.documentElement.classList.add(
+      "sia-formulario-autorizado"
+    );
+  } else {
+    window.location.replace(
+      "./autenticacion-ba-05g9.html"
+    );
+  }
+})();
+</script>
+
 <style>
 :root {
   --verde:#153E37;
