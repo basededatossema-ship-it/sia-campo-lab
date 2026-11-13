@@ -568,21 +568,19 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
 <script src="./app.js" defer></script>
 
 
+
 <script>
 (function () {
   "use strict";
 
-  // SIA-BIENESTAR-05G.19D
-  // Cierre de sesion local.
+  // SIA-BIENESTAR-05G.19E.1
+  // Cierre y coordinación local de sesión.
 
   const boton = document.getElementById(
     "cerrarSesion05G19D"
   );
 
-  if (!boton) return;
-
-  boton.addEventListener("click", function () {
-
+  function invalidarSesion() {
     sessionStorage.removeItem(
       "SIA_BA_IDENTIDAD_05G14"
     );
@@ -590,69 +588,69 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
     sessionStorage.removeItem(
       "SIA_BA_ACCESO_GOOGLE_05G19A"
     );
+  }
 
-    // SIA-BIENESTAR-05G.19E.1
-    // Avisar a otras pestañas del cierre.
+  function irAutenticacion() {
+    window.location.replace(
+      "./autenticacion-ba-05g9.html"
+    );
+  }
 
-    try {
-      localStorage.setItem(
-        "SIA_BA_AVISO_CIERRE_05G19E",
-        String(Date.now()) + "-" +
-          Math.random().toString(36).slice(2)
-      );
-    } catch (error) {
-      console.warn(
-        "No fue posible comunicar el cierre."
-      );
+  if (boton) {
+    boton.addEventListener("click", function () {
+
+      invalidarSesion();
+
+      // Comunicar cierre a otras pestañas.
+      try {
+        localStorage.setItem(
+          "SIA_BA_AVISO_CIERRE_05G19E",
+          String(Date.now()) + "-" +
+            Math.random().toString(36).slice(2)
+        );
+      } catch (error) {
+        console.warn(
+          "No fue posible comunicar el cierre."
+        );
+      }
+
+      irAutenticacion();
+    });
+  }
+
+  // Escuchar cierres desde otras pestañas.
+  window.addEventListener("storage", function (event) {
+
+    if (
+      event.key !==
+      "SIA_BA_AVISO_CIERRE_05G19E"
+    ) {
+      return;
     }
 
-    window.location.replace(
-      "./autenticacion-ba-05g9.html"
-    );
-    
-window.addEventListener("storage", function (event) {
-  if (
-    event.key !==
-    "SIA_BA_AVISO_CIERRE_05G19E"
-  ) {
-    return;
-  }
-
-  sessionStorage.removeItem(
-    "SIA_BA_IDENTIDAD_05G14"
-  );
-
-  sessionStorage.removeItem(
-    "SIA_BA_ACCESO_GOOGLE_05G19A"
-  );
-
-  window.location.replace(
-    "./autenticacion-ba-05g9.html"
-  );
-});
-
+    invalidarSesion();
+    irAutenticacion();
   });
 
-window.addEventListener("pageshow", function () {
+  // Evitar restaurar un panel sin sesión.
+  window.addEventListener("pageshow", function () {
 
-  const identidad = sessionStorage.getItem(
-    "SIA_BA_IDENTIDAD_05G14"
-  );
-
-  const acceso = sessionStorage.getItem(
-    "SIA_BA_ACCESO_GOOGLE_05G19A"
-  );
-
-  if (!identidad || !acceso) {
-    window.location.replace(
-      "./autenticacion-ba-05g9.html"
+    const identidad = sessionStorage.getItem(
+      "SIA_BA_IDENTIDAD_05G14"
     );
-  }
 
-});
+    const acceso = sessionStorage.getItem(
+      "SIA_BA_ACCESO_GOOGLE_05G19A"
+    );
+
+    if (!identidad || !acceso) {
+      irAutenticacion();
+    }
+  });
 
 })();
 </script>
+
 
 </body>
 </html>
