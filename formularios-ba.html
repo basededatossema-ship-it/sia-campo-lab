@@ -1021,7 +1021,8 @@ async function validarFormulario(evento) {
 
   } finally {
     guardadoEnCurso = false;
-    boton.disabled = actividadGuardada;
+    boton.disabled =
+  actividadGuardada || !identidadFormulario;
   }
 }
 
@@ -1133,6 +1134,41 @@ window.addEventListener(
     }
   }
 );
+
+// SIA-BIENESTAR-05G.19E.1
+// Bloqueo ante cierre de sesión
+// comunicado desde otra pestaña.
+
+window.addEventListener("storage", function (event) {
+
+  if (
+    event.key !==
+    "SIA_BA_AVISO_CIERRE_05G19E"
+  ) {
+    return;
+  }
+
+  sessionStorage.removeItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
+  sessionStorage.removeItem(
+    "SIA_BA_ACCESO_GOOGLE_05G19A"
+  );
+
+  identidadFormulario = null;
+
+  $("guardarInstitucional").disabled = true;
+
+  $("identidadInstitucional").textContent =
+    "SESIÓN INSTITUCIONAL FINALIZADA\n" +
+    "Debes identificarte nuevamente.";
+
+  $("resultado").textContent =
+    "El formulario queda bloqueado. " +
+    "Los datos diligenciados no se " +
+    "han borrado.";
+});
 
 cargarIdentidadInstitucional();
 prepararRecuperacion05G15C();
