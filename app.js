@@ -984,6 +984,38 @@ async function iniciarAplicacion() {
 
   await verificarServiceWorker();
 
+// SIA-BIENESTAR-05G.19B
+// No inicializar registros de campo
+// sin una identidad y acceso concordantes.
+
+let accesoConfirmado = false;
+
+try {
+  const usuarioId =
+    usuarioListado05G16B();
+
+  const acceso = JSON.parse(
+    sessionStorage.getItem(
+      "SIA_BA_ACCESO_GOOGLE_05G19A"
+    ) || "null"
+  );
+
+  accesoConfirmado = Boolean(
+    usuarioId &&
+    acceso &&
+    acceso.usuarioId === usuarioId
+  );
+
+} catch (error) {
+  accesoConfirmado = false;
+}
+
+if (!accesoConfirmado) {
+  $("contador").textContent =
+    "Acceso institucional requerido.";
+  return;
+}
+
   try {
     db = await abrirBase();
 
