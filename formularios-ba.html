@@ -589,6 +589,40 @@ function cargarAutorParaGuardado05G14C() {
     );
   }
 
+  // SIA-BIENESTAR-05G.16D.4
+  // Comprobar la identidad local activa
+  // antes de autorizar el guardado.
+
+  if (
+    !window.SIABanimIdentidadOffline
+  ) {
+    throw new Error(
+      "COMPONENTE_IDENTIDAD_LOCAL_NO_DISPONIBLE"
+    );
+  }
+
+  const identidadActiva =
+    SIABanimIdentidadOffline.consultar();
+
+  if (!identidadActiva) {
+    throw new Error(
+      "IDENTIDAD_LOCAL_NO_DISPONIBLE_O_VENCIDA"
+    );
+  }
+
+  if (
+    identidadActiva.usuarioId !==
+      identidadFormulario.usuarioId ||
+    identidadActiva.nombreCompleto !==
+      identidadFormulario.nombreCompleto ||
+    identidadActiva.verificadoEn !==
+      identidadFormulario.verificadoEn
+  ) {
+    throw new Error(
+      "CAMBIO_DE_FUNCIONARIO_DETECTADO"
+    );
+  }
+
   return { ...identidadFormulario };
 }
 
