@@ -200,6 +200,64 @@
       color: var(--muted);
       line-height: 1.5;
     }
+
+    
+/* SIA-BIENESTAR-05G.17E */
+/* Accesos institucionales móviles */
+
+#accesoInstitucional a,
+a[href="./formularios-ba.html"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+
+  border-radius: 11px;
+  text-decoration: none;
+  text-align: center;
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  transition: background-color .2s ease;
+}
+
+#accesoInstitucional a {
+  background: #24775E;
+  color: #FFFFFF;
+}
+
+a[href="./formularios-ba.html"] {
+  background: #E4EFEB;
+  color: #153E37;
+  border: 1px solid #C9DFD3;
+}
+
+#accesoInstitucional a:focus-visible,
+a[href="./formularios-ba.html"]:focus-visible {
+  outline: 3px solid #77B99C;
+  outline-offset: 3px;
+}
+
+#accesoInstitucional .notice,
+#accesoInstitucional + .card .notice {
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 480px) {
+  #accesoInstitucional a,
+  a[href="./formularios-ba.html"] {
+    font-size: 13px;
+  }
+}
+
   </style>
 </head>
 
