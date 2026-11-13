@@ -414,6 +414,20 @@ a[href="./formularios-ba.html"]:focus-visible {
      style="white-space: pre-line;">
   Verificando identidad institucional...
 </div>
+
+
+<!-- SIA-BIENESTAR-05G.19D -->
+<!-- Cierre de sesion institucional -->
+
+<div class="card" id="sesionInstitucional05G19D">
+  <button
+    id="cerrarSesion05G19D"
+    type="button"
+    class="secondary-button">
+    Cerrar sesión
+  </button>
+</div>
+
 <section class="card">
   <h2>Formularios institucionales</h2>
   
@@ -553,6 +567,37 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
 <script src="./contrato-ba.js" defer></script>
 <script src="./app.js" defer></script>
 
+
+<script>
+(function () {
+  "use strict";
+
+  // SIA-BIENESTAR-05G.19D
+  // Cierre de sesion local.
+
+  const boton = document.getElementById(
+    "cerrarSesion05G19D"
+  );
+
+  if (!boton) return;
+
+  boton.addEventListener("click", function () {
+
+    sessionStorage.removeItem(
+      "SIA_BA_IDENTIDAD_05G14"
+    );
+
+    sessionStorage.removeItem(
+      "SIA_BA_ACCESO_GOOGLE_05G19A"
+    );
+
+    window.location.replace(
+      "./autenticacion-ba-05g9.html"
+    );
+  });
+
+})();
+</script>
 
 </body>
 </html>
