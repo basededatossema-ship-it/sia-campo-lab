@@ -12,7 +12,7 @@
 
 "use strict";
 
-const CACHE_NAME = "banimapp-lab-v34";
+const CACHE_NAME = "banimapp-lab-v35";
 
 const BASE_URL = new URL(
   "./",
