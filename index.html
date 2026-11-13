@@ -93,6 +93,14 @@
       ? "sia-acceso-autorizado"
       : "sia-acceso-requerido"
   );
+  // SIA-BIENESTAR-05G.19B
+// Sin sesión válida, solicitar acceso Google.
+
+if (!autorizado) {
+  window.location.replace(
+    "./autenticacion-ba-05g9.html"
+  );
+}
 })();
 </script>
 
@@ -269,7 +277,13 @@
       color: var(--muted);
       line-height: 1.5;
     }
+/* Ocultar la tarjeta de acceso
+   cuando el usuario ya fue autorizado. */
 
+html.sia-acceso-autorizado
+#accesoInstitucional {
+  display: none !important;
+}
 /* SIA-BIENESTAR-05G.19A */
 /* Control visual del panel principal */
 
