@@ -99,12 +99,13 @@
   </div>
 
   
-<p id="accesoFormularios"
-   hidden>
-  <a href="./formularios-ba.html">
-    Continuar a formularios institucionales
+
+<p id="accesoFormularios" hidden>
+  <a href="./index.html">
+    Continuar al inicio de banimApp
   </a>
 </p>
+
 
 
   <p class="nota">
@@ -129,6 +130,32 @@ const CLIENT_ID =
 
 const salida = document.getElementById("estado");
 const campoURL = document.getElementById("endpoint");
+
+const CLAVE_ENDPOINT_BA_05G17F =
+  "SIA_BA_ENDPOINT_05G17F";
+
+function recuperarEndpoint05G17F() {
+  try {
+    const guardado = localStorage.getItem(
+      CLAVE_ENDPOINT_BA_05G17F
+    );
+
+    if (!guardado) return;
+
+    campoURL.value = guardado;
+
+    // Reutilizar la validacion existente.
+    try {
+      obtenerEndpoint();
+    } catch (error) {
+      campoURL.value = "";
+    }
+  } catch (error) {
+    // El acceso manual sigue disponible.
+  }
+}
+
+recuperarEndpoint05G17F();
 
 let procesando = false;
 
@@ -470,6 +497,23 @@ async function recibirCredencial(respuestaGoogle) {
 
         return;
       }
+
+      
+      // SIA-BIENESTAR-05G.17F
+      // Recordar solamente la URL del servicio
+      // tras una autenticacion satisfactoria.
+      // No almacenar credenciales ni tokens.
+      
+      try {
+        localStorage.setItem(
+          CLAVE_ENDPOINT_BA_05G17F,
+          endpoint
+        );
+      } catch (error) {
+        // La autenticacion puede continuar
+        // aunque no sea posible guardar la URL.
+      }
+
 
 
       // Habilitar formularios únicamente
