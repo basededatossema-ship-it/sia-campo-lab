@@ -132,20 +132,11 @@ self.addEventListener("fetch", event => {
           ).href;
         }
 
-        // Entregar directamente las páginas
-        // de la aplicación desde su caché.
-        if (pagina) {
-          const guardada = await cache.match(
-            pagina
-          );
+        
+        // SIA-BIENESTAR-05G.19B
+        // En linea: priorizar la version publicada.
+        // Sin conexion: conservar funcionamiento offline.
 
-          if (guardada) {
-            return guardada;
-          }
-        }
-
-        // Recuperación cuando no existe
-        // una copia local.
         try {
           const respuesta = await fetch(request);
 
@@ -159,10 +150,18 @@ self.addEventListener("fetch", event => {
           return respuesta;
 
         } catch (error) {
-          // Nunca reemplazar formularios
-          // con la página principal.
+          if (pagina) {
+            const guardada =
+              await cache.match(pagina);
+
+            if (guardada) {
+              return guardada;
+            }
+          }
+
           return Response.error();
         }
+
 
       })()
     );
