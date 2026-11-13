@@ -663,6 +663,36 @@ function cargarAutorParaGuardado05G14C() {
     );
   }
 
+  // SIA-BIENESTAR-05G.19E.3
+  // Verificar el acceso Google antes
+  // de asociar autoria al borrador.
+
+  let accesoGoogle;
+
+  try {
+    accesoGoogle = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_ACCESO_GOOGLE_05G19A"
+      ) || "null"
+    );
+  } catch (error) {
+    throw new Error(
+      "SESION_GOOGLE_INVALIDA"
+    );
+  }
+
+  if (
+    !datos ||
+    !accesoGoogle ||
+    !accesoGoogle.usuarioId ||
+    accesoGoogle.usuarioId !== datos.usuarioId ||
+    accesoGoogle.verificadoEn !== datos.verificadoEn
+  ) {
+    throw new Error(
+      "SESION_INSTITUCIONAL_NO_VIGENTE"
+    );
+  }
+
   if (
     !datos ||
     datos.modulo !== "BIENESTAR_ANIMAL" ||
