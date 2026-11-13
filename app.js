@@ -585,10 +585,31 @@ async function mostrarRegistros() {
     r => r.estado === "PENDIENTE"
   ).length;
 
-  $("contador").textContent =
-    registros.length + " registro(s) local(es). " +
-    borradores + " borrador(es). " +
-    pendientes + " pendiente(s).";
+  
+  // SIA-BIENESTAR-05G.17F
+  // Contador exclusivo del funcionario activo.
+  // No informa cantidades de otros usuarios.
+
+  if (registros.length === 0) {
+
+    $("contador").textContent =
+      "No hay actividades visibles para " +
+      "el funcionario institucional " +
+      usuarioId + ".\n" +
+      "Esto no significa que el " +
+      "almacenamiento esté vacío.";
+
+  } else {
+
+    $("contador").textContent =
+      "Funcionario institucional: " +
+      usuarioId + "\n" +
+      registros.length +
+      " actividad(es) propia(s). " +
+      borradores + " borrador(es). " +
+      pendientes + " pendiente(s).";
+  }
+
 
 
     for (const registro of registros) {
