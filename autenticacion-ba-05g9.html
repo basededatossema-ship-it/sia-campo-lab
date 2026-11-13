@@ -9,6 +9,74 @@
 
   <title>SIA - Identidad Bienestar Animal</title>
 
+<script>
+(function () {
+  "use strict";
+
+  let autorizado = false;
+
+  try {
+    const identidad = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
+    const acceso = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_ACCESO_GOOGLE_05G19A"
+      ) || "null"
+    );
+
+    const referencia = JSON.parse(
+      localStorage.getItem(
+        "SIA_BA_IDENTIDAD_OFFLINE_05G15"
+      ) || "null"
+    );
+
+    const fecha = Date.parse(
+      referencia && referencia.verificadoEn
+    );
+
+    const antiguedad = Date.now() - fecha;
+
+    autorizado = Boolean(
+      identidad &&
+      acceso &&
+      referencia &&
+      typeof identidad.usuarioId === "string" &&
+      identidad.usuarioId.trim() &&
+      typeof identidad.nombreCompleto === "string" &&
+      identidad.nombreCompleto.trim() &&
+      identidad.modulo === "BIENESTAR_ANIMAL" &&
+      identidad.permiso === "LEER" &&
+      identidad.usuarioId === acceso.usuarioId &&
+      identidad.usuarioId === referencia.usuarioId &&
+      identidad.nombreCompleto ===
+        referencia.nombreCompleto &&
+      identidad.verificadoEn ===
+        acceso.verificadoEn &&
+      identidad.verificadoEn ===
+        referencia.verificadoEn &&
+      referencia.modulo === "BIENESTAR_ANIMAL" &&
+      referencia.permiso === "LEER" &&
+      Number.isFinite(fecha) &&
+      antiguedad >= 0 &&
+      antiguedad <= 72 * 60 * 60 * 1000
+    );
+
+  } catch (error) {
+    autorizado = false;
+  }
+
+  document.documentElement.classList.add(
+    autorizado
+      ? "sia-acceso-autorizado"
+      : "sia-acceso-requerido"
+  );
+})();
+</script>
+
   <style>
     body {
       margin: 0;
@@ -57,6 +125,26 @@
       color: #63766c;
       font-size: 14px;
     }
+
+    
+/* SIA-BIENESTAR-05G.19A */
+/* Panel cerrado hasta confirmar acceso. */
+
+html.sia-acceso-requerido
+main > :not(#accesoInstitucional) {
+  display: none !important;
+}
+
+html.sia-acceso-requerido
+#identidadPanel05G18B {
+  display: none !important;
+}
+
+html.sia-acceso-autorizado
+#accesoInstitucional > .notice {
+  display: none;
+}
+
   </style>
 
   <script
@@ -464,6 +552,10 @@ async function recibirCredencial(respuestaGoogle) {
           "SIA_BA_IDENTIDAD_05G14"
         );
 
+        sessionStorage.removeItem(
+          "SIA_BA_ACCESO_GOOGLE_05G19A"
+        );
+
         SIABanimResponsable.limpiar();
 
         mostrar(
@@ -474,6 +566,29 @@ async function recibirCredencial(respuestaGoogle) {
       }
 
       
+      // SIA-BIENESTAR-05G.19A
+      // Registrar el acceso confirmado
+      // en esta pestaña.
+
+      try {
+        sessionStorage.setItem(
+          "SIA_BA_ACCESO_GOOGLE_05G19A",
+          JSON.stringify({
+            usuarioId: responsable.usuarioId,
+            verificadoEn: responsable.verificadoEn
+          })
+        );
+      } catch (error) {
+        sessionStorage.removeItem(
+          "SIA_BA_IDENTIDAD_05G14"
+        );
+
+        mostrar(
+          "NO_SE_PUDO_ESTABLECER_SESION"
+        );
+        return;
+      }
+
     
 
 
