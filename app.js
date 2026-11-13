@@ -56,12 +56,23 @@ function actualizarConexion() {
       ) || "null"
     );
 
+    
+    const identidad = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
     sesionValida = Boolean(
       usuarioId &&
       acceso &&
+      identidad &&
       acceso.usuarioId === usuarioId &&
-      acceso.verificadoEn
+      identidad.usuarioId === usuarioId &&
+      typeof acceso.verificadoEn === "string" &&
+      acceso.verificadoEn === identidad.verificadoEn
     );
+
   } catch (error) {
     sesionValida = false;
   }
@@ -1101,6 +1112,21 @@ if (!accesoConfirmado) {
 
     mensaje(error.message, "error");
   }
+
+  
+  // SIA-BIENESTAR-05G.20B
+  // Refrescar el estado informativo
+  // cuando el panel vuelva a estar visible.
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (document.visibilityState === "visible") {
+        actualizarConexion();
+      }
+    }
+  );
+
 }
 
 document.addEventListener(
