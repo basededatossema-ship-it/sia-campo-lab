@@ -23,11 +23,66 @@ function mensaje(texto, tipo = "") {
   elemento.className = "status " + tipo;
 }
 
+
+/**
+ * SIA-BIENESTAR-05G.20A
+ * Estado informativo de conectividad.
+ * No concede acceso ni permisos.
+ */
+
 function actualizarConexion() {
-  $("conexion").textContent = navigator.onLine
-    ? "Conexión reportada"
-    : "Sin conexión reportada";
+
+  const enLinea = navigator.onLine;
+
+  $("conexion").textContent = enLinea
+    ? "Red disponible (reportada)"
+    : "Sin conexión de red reportada";
+
+  const indicador = $(
+    "conectividadCampo05G20A"
+  );
+
+  if (!indicador) return;
+
+  let sesionValida = false;
+
+  try {
+    const usuarioId =
+      usuarioListado05G16B();
+
+    const acceso = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_ACCESO_GOOGLE_05G19A"
+      ) || "null"
+    );
+
+    sesionValida = Boolean(
+      usuarioId &&
+      acceso &&
+      acceso.usuarioId === usuarioId &&
+      acceso.verificadoEn
+    );
+  } catch (error) {
+    sesionValida = false;
+  }
+
+  const conectividad = enLinea
+    ? "CONECTIVIDAD REPORTADA\n" +
+      "El dispositivo informa conexión de red."
+    : "SIN CONEXIÓN REPORTADA\n" +
+      "El trabajo local puede continuar " +
+      "mientras la sesión permanezca válida.";
+
+  const identidad = sesionValida
+    ? "SESIÓN LOCAL ACTIVA"
+    : "SESIÓN INSTITUCIONAL REQUERIDA";
+
+  indicador.textContent =
+    conectividad + "\n\n" +
+    identidad + "\n" +
+    "Sincronización: DESHABILITADA";
 }
+
 
 function generarUUID() {
   if (typeof crypto.randomUUID === "function") {
