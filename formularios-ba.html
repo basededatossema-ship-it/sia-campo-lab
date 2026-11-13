@@ -1189,17 +1189,40 @@ function verificarTitularFormulario05G16D5() {
       ? SIABanimIdentidadOffline.consultar()
       : null;
 
+  
+  // SIA-BIENESTAR-05G.19E.4
+  // Verificar tambien la sesion Google
+  // cuando se retoma el formulario.
+
+  let accesoGoogle = null;
+
+  try {
+    accesoGoogle = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_ACCESO_GOOGLE_05G19A"
+      ) || "null"
+    );
+  } catch (error) {
+    accesoGoogle = null;
+  }
+
   if (
     identidadLocal &&
+    accesoGoogle &&
     identidadLocal.usuarioId ===
       identidadFormulario.usuarioId &&
     identidadLocal.nombreCompleto ===
       identidadFormulario.nombreCompleto &&
     identidadLocal.verificadoEn ===
+      identidadFormulario.verificadoEn &&
+    accesoGoogle.usuarioId ===
+      identidadFormulario.usuarioId &&
+    accesoGoogle.verificadoEn ===
       identidadFormulario.verificadoEn
   ) {
     return;
   }
+
 
   // Invalidar únicamente la referencia
   // temporal de este formulario.
