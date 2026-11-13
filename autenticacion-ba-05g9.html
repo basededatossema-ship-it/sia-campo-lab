@@ -81,16 +81,7 @@
     sincronización.
   </p>
 
-  <label for="endpoint">
-    URL /exec del Servicio Central
-  </label>
-
-  <input
-    id="endpoint"
-    type="url"
-    autocomplete="off"
-    placeholder="https://script.google.com/macros/s/.../exec"
-  >
+ 
 
   <div id="googleButton"></div>
 
@@ -128,34 +119,18 @@
 const CLIENT_ID =
   "539376159794-mp0qjge29fhkudf2tdp9cu8knfq3qhlv.apps.googleusercontent.com";
 
+
 const salida = document.getElementById("estado");
-const campoURL = document.getElementById("endpoint");
 
-const CLAVE_ENDPOINT_BA_05G17F =
-  "SIA_BA_ENDPOINT_05G17F";
+// SIA-BIENESTAR-05G.17G
+// Configuracion institucional del despliegue.
+// No contiene contraseñas ni tokens.
 
-function recuperarEndpoint05G17F() {
-  try {
-    const guardado = localStorage.getItem(
-      CLAVE_ENDPOINT_BA_05G17F
-    );
+const SERVICIO_CENTRAL_BA_URL =
+  "https://script.google.com/macros/s/AKfycbx8xZx31rH7LERYaSrwv6NzdNHjVKP0-AH_y6WZGSrp3IeOekC6JbgEFx-K4S0Ywg77/exec";
 
-    if (!guardado) return;
 
-    campoURL.value = guardado;
 
-    // Reutilizar la validacion existente.
-    try {
-      obtenerEndpoint();
-    } catch (error) {
-      campoURL.value = "";
-    }
-  } catch (error) {
-    // El acceso manual sigue disponible.
-  }
-}
-
-recuperarEndpoint05G17F();
 
 let procesando = false;
 
@@ -167,7 +142,7 @@ function obtenerEndpoint() {
   let url;
 
   try {
-    url = new URL(campoURL.value.trim());
+    url = new URL(SERVICIO_CENTRAL_BA_URL);
   } catch (_) {
     throw new Error("URL_DEL_SERVICIO_INVALIDA");
   }
@@ -211,9 +186,9 @@ async function recibirCredencial(respuestaGoogle) {
     endpoint = obtenerEndpoint();
   } catch (error) {
     mostrar(
-      "Ingresa primero la URL /exec válida " +
-      "del Servicio Central."
-    );
+  "CONFIGURACION DEL SERVICIO CENTRAL INVALIDA. " +
+  "Comunicate con el administrador SIA."
+);
     return;
   }
 
@@ -499,20 +474,7 @@ async function recibirCredencial(respuestaGoogle) {
       }
 
       
-      // SIA-BIENESTAR-05G.17F
-      // Recordar solamente la URL del servicio
-      // tras una autenticacion satisfactoria.
-      // No almacenar credenciales ni tokens.
-      
-      try {
-        localStorage.setItem(
-          CLAVE_ENDPOINT_BA_05G17F,
-          endpoint
-        );
-      } catch (error) {
-        // La autenticacion puede continuar
-        // aunque no sea posible guardar la URL.
-      }
+    
 
 
 
@@ -597,9 +559,9 @@ function iniciarGoogle() {
   );
 
   mostrar(
-    "Introduce la URL /exec y selecciona " +
-    "Iniciar sesión con Google."
-  );
+  "Servicio Central SIA configurado.\n" +
+  "Selecciona Iniciar sesión con Google."
+);
 }
 
 window.addEventListener("load", iniciarGoogle);
