@@ -1064,7 +1064,13 @@ async function iniciarAplicacion() {
     }
   );
 
-  await verificarServiceWorker();
+  
+  // SIA-BIENESTAR-05G.20C.2
+  // Verificar Service Worker sin bloquear
+  // la apertura de IndexedDB ni los registros.
+
+  void verificarServiceWorker();
+
 
 // SIA-BIENESTAR-05G.19B
 // No inicializar registros de campo
