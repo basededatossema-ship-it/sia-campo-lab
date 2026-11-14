@@ -578,9 +578,15 @@ function usuarioListado05G16B() {
 }
 
 
+
 /**
+ * SIA-BIENESTAR-05G.20C
+ * Presentación de identidad institucional.
+ * No autentica ni modifica registros.
+ */
 
 function actualizarIdentidadPanel05G18B() {
+
   const salida = $("identidadPanel05G18B");
   if (!salida) return;
 
