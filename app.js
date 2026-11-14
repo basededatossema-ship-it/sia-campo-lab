@@ -579,62 +579,72 @@ function usuarioListado05G16B() {
 
 
 /**
- * SIA-BIENESTAR-05G.18B
- * Presentacion de identidad institucional.
- *
- * No autentica ni modifica almacenamiento.
- */
 
 function actualizarIdentidadPanel05G18B() {
-
   const salida = $("identidadPanel05G18B");
-
   if (!salida) return;
 
-  // Reutilizar el control de identidad
-  // ya implementado para la lista personal.
+  salida.replaceChildren();
 
   const usuarioId = usuarioListado05G16B();
-
-  if (!usuarioId) {
-    salida.textContent =
-      "IDENTIDAD INSTITUCIONAL REQUERIDA\n" +
-      "Accede con Google o confirma tu " +
-      "identidad local desde los formularios.";
-    return;
-  }
+  let identidad = null;
 
   try {
-    const identidad = JSON.parse(
+    identidad = JSON.parse(
       sessionStorage.getItem(
         "SIA_BA_IDENTIDAD_05G14"
       ) || "null"
     );
+  } catch (_) {}
 
-    if (
-      !identidad ||
-      identidad.usuarioId !== usuarioId
-    ) {
-      throw new Error(
-        "IDENTIDAD_NO_COINCIDE"
-      );
-    }
-
+  if (
+    !usuarioId ||
+    !identidad ||
+    identidad.usuarioId !== usuarioId
+  ) {
     salida.textContent =
-      "IDENTIDAD LOCAL ACTIVA\n" +
-      "Responsable: " +
-      identidad.nombreCompleto + "\n" +
-      "ID institucional: " +
-      usuarioId + "\n" +
-      "Módulo: BIENESTAR_ANIMAL\n" +
-      "Permiso de referencia: LEER\n" +
-      "Sincronización: DESHABILITADA";
-
-  } catch (error) {
-    salida.textContent =
-      "IDENTIDAD INSTITUCIONAL REQUERIDA";
+      "Identidad institucional requerida";
+    return;
   }
+
+  const agregar = (etiqueta, valor, clase) => {
+    const elemento = document.createElement(etiqueta);
+    elemento.className = clase;
+    elemento.textContent = valor;
+    salida.appendChild(elemento);
+  };
+
+  agregar(
+    "div",
+    "✓ SESIÓN INSTITUCIONAL ACTIVA",
+    "sia-identidad-estado"
+  );
+
+  agregar(
+    "div",
+    identidad.nombreCompleto,
+    "sia-identidad-nombre"
+  );
+
+  agregar(
+    "div",
+    "ID: " + usuarioId,
+    "sia-identidad-detalle"
+  );
+
+  agregar(
+    "div",
+    "Bienestar Animal · Permiso: LEER",
+    "sia-identidad-detalle"
+  );
+
+  agregar(
+    "div",
+    "Sincronización deshabilitada",
+    "sia-identidad-pie"
+  );
 }
+
 
 
 async function mostrarRegistros() {
