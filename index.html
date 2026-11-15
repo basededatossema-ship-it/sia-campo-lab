@@ -278,6 +278,10 @@ if (!autorizado) {
       line-height: 1.5;
     }
 
+    /* SIA-BIENESTAR-05G.21K.1 */
+#capturaPermitida05G21K1[hidden] {
+  display: none !important;
+}
     
 /* SIA-BIENESTAR-05G.20C */
 /* Identidad institucional compacta */
@@ -509,8 +513,12 @@ a[href="./formularios-ba.html"]:focus-visible {
   </button>
 </div>
 
-<section class="card">
+
+<section class="card"
+         id="capturaPermitida05G21K1"
+         hidden>
   <h2>Captura de actividades</h2>
+
   
 <p class="notice">
   Registra actividades de Visita Técnica
@@ -759,6 +767,18 @@ const codigosPermitidos = [
       p.SINCRONIZAR !== false
     ) {
       return;
+    }
+    
+    // SIA-BIENESTAR-05G.21K.1
+    // Mostrar captura solo con contrato
+    // institucional validado.
+
+    const captura = document.getElementById(
+      "capturaPermitida05G21K1"
+    );
+
+    if (captura && p.CAPTURA_LOCAL === true) {
+      captura.hidden = false;
     }
 
     salida.textContent =
