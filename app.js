@@ -677,6 +677,60 @@ async function mostrarRegistros() {
   }
 
   
+  // SIA-BIENESTAR-05G.22D
+  // Comprobar permiso CONSULTAR antes
+  // de leer los registros locales.
+
+  let consultaAutorizada = false;
+
+  try {
+    const sesion = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
+    const contrato = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_PERMISOS_05G21I"
+      ) || "null"
+    );
+
+    const p = contrato && contrato.permisos;
+
+    consultaAutorizada = Boolean(
+      sesion &&
+      contrato &&
+      sesion.usuarioId === usuarioId &&
+      contrato.usuarioId === usuarioId &&
+      contrato.verificadoEn ===
+        sesion.verificadoEn &&
+      contrato.contrato ===
+        "SIA-PERMISOS-BA-01" &&
+      p &&
+      typeof p === "object" &&
+      !Array.isArray(p) &&
+      Object.keys(p).length === 5 &&
+      p.CONSULTAR === true &&
+      p.CAPTURA_LOCAL === true &&
+      p.ESCRIBIR === false &&
+      p.ADMINISTRAR === false &&
+      p.SINCRONIZAR === false
+    );
+
+  } catch (_) {
+    consultaAutorizada = false;
+  }
+
+  if (!consultaAutorizada) {
+    $("contador").textContent =
+      "CONSULTA NO HABILITADA.\n" +
+      "No existe un contrato de permisos " +
+      "válido para esta sesión.";
+
+    return;
+  }
+
   const todos = await consultarRegistros();
 
   // SIA-BIENESTAR-05G.16C.1
