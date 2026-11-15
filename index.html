@@ -277,6 +277,48 @@ if (!autorizado) {
       color: var(--muted);
       line-height: 1.5;
     }
+    
+    /* SIA-BIENESTAR-05G.22B */
+    
+    #estadoPermisos05G21J2 {
+      white-space: normal !important;
+      padding: 16px;
+    }
+    
+    .sia-permisos-estado {
+      color: #185B38;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 14px;
+    }
+    
+    .sia-permisos-fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid #CBD8D1;
+      font-size: 13px;
+    }
+    
+    .sia-permisos-fila span {
+      flex: 1;
+    }
+    
+    .sia-permisos-fila strong {
+      text-align: right;
+      font-size: 12px;
+    }
+    
+    .sia-permiso-si {
+      color: #185B38;
+    }
+    
+    .sia-permiso-no {
+      color: #5F726A;
+    }
+
 
 /* SIA-BIENESTAR-05G.21K.1 */
 #capturaPermitida05G21K1[hidden] {
@@ -772,13 +814,45 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
     }
 
 
-    salida.textContent =
-      "PERMISOS INSTITUCIONALES VERIFICADOS\n\n" +
-      "Consultar: AUTORIZADO\n" +
-      "Captura local: AUTORIZADO\n" +
-      "Escritura central: NO AUTORIZADO\n" +
-      "Administracion: NO AUTORIZADO\n" +
-      "Sincronizacion: DESHABILITADA";
+    
+    // SIA-BIENESTAR-05G.22B
+    // Presentacion visual de permisos validados.
+    // No modifica autorizaciones.
+
+    salida.textContent = "";
+
+    const encabezado = document.createElement("p");
+    encabezado.className = "sia-permisos-estado";
+    encabezado.textContent =
+      "✓ Identidad y permisos verificados";
+
+    salida.appendChild(encabezado);
+
+    const capacidades = [
+      ["Consulta de registros", "Autorizado", true],
+      ["Captura local", "Autorizado", true],
+      ["Escritura central", "No habilitado", false],
+      ["Administración", "No habilitado", false],
+      ["Sincronización", "Deshabilitada", false]
+    ];
+
+    capacidades.forEach(([nombre, estado, habilitado]) => {
+      const fila = document.createElement("div");
+      fila.className = "sia-permisos-fila";
+
+      const etiqueta = document.createElement("span");
+      etiqueta.textContent = nombre;
+
+      const valor = document.createElement("strong");
+      valor.className = habilitado
+        ? "sia-permiso-si"
+        : "sia-permiso-no";
+      valor.textContent = estado;
+
+      fila.append(etiqueta, valor);
+      salida.appendChild(fila);
+    });
+
 
   } catch (error) {
     salida.textContent = noVerificados;
