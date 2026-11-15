@@ -192,10 +192,31 @@
     }
   }
 
+  /**
+   * SIA-BIENESTAR-05G.25.7.C.8
+   * Reserva de interfaces para la futura edicion local BA-02.
+   *
+   * BLOQUEO INTENCIONAL: todavia no existe un mecanismo
+   * institucional comprobable que autorice la edicion.
+   * No acceder a IndexedDB, ni aceptar autorizaciones
+   * proporcionadas por parametros o sessionStorage.
+   * No habilitar estas funciones hasta una etapa posterior
+   * expresamente autorizada y probada.
+   */
+  async function consultarParaEdicion(uuid, contexto) {
+    throw new Error("BA02_EDICION_NO_HABILITADA");
+  }
+
+  async function actualizarBorrador(uuid, cambios, contexto) {
+    throw new Error("BA02_EDICION_NO_HABILITADA");
+  }
+
   window.SIABanimAlmacenamiento =
     Object.freeze({
       guardar,
-      verificar
+      verificar,
+      consultarParaEdicion,
+      actualizarBorrador
     });
 
 })();
