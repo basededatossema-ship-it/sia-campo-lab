@@ -92,9 +92,39 @@
     };
   }
 
+  // SIA-BIENESTAR-05G.25.7.B.6
+  // Inspeccion declarativa. NO concede autorizacion.
+  function inspeccionarCapacidad(contrato, accion) {
+    const resultado = validar(contrato);
+    const permitidas = [
+      "CONSULTAR",
+      "CAPTURA_LOCAL",
+      "EDITAR_BORRADOR"
+    ];
+    const accionReconocida =
+      typeof accion === "string" &&
+      permitidas.includes(accion);
+    const declarada = Boolean(
+      resultado.valido &&
+      accionReconocida &&
+      (accion !== "EDITAR_BORRADOR"
+        ? contrato.permisos[accion] === true
+        : resultado.version === "SIA-PERMISOS-BA-02" &&
+          contrato.permisos.EDITAR_BORRADOR === true)
+    );
+    return Object.freeze({
+      contratoValido: resultado.valido,
+      version: resultado.version,
+      accionReconocida,
+      capacidadDeclarada: declarada,
+      autorizacionConfirmada: false
+    });
+  }
+
   window.SIABanimPermisos05G25 =
     Object.freeze({
-      validar
+      validar,
+      inspeccionarCapacidad
     });
 
 })();
