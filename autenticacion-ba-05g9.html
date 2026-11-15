@@ -186,7 +186,12 @@ async function recibirCredencial(respuestaGoogle) {
   sessionStorage.removeItem(
     "SIA_BA_ACCESO_GOOGLE_05G19A"
   );
+// SIA-BIENESTAR-05G.21I
+// Invalidar permisos de una sesión anterior.
 
+sessionStorage.removeItem(
+  "SIA_BA_PERMISOS_05G21I"
+);
   let endpoint;
 
   try {
@@ -509,6 +514,102 @@ async function recibirCredencial(respuestaGoogle) {
       }
 
     
+  
+      /**
+       * SIA - BIENESTAR ANIMAL
+       * Etapa 05G.21I
+       *
+       * Consulta de permisos institucionales.
+       * No modifica autorizaciones existentes.
+       * No habilita escritura ni sincronizacion.
+       */
+
+      try {
+
+        const respuestaPermisos = await fetch(
+          endpoint,
+          {
+            method: "POST",
+            credentials: "omit",
+            redirect: "follow",
+            headers: {
+              "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({
+              operacion:
+                "CONSULTAR_PERMISOS_BANIMAPP",
+              idToken: idToken
+            }),
+            signal: controlador.signal
+          }
+        );
+
+        if (!respuestaPermisos.ok) {
+          throw new Error("HTTP_PERMISOS");
+        }
+
+        const datosPermisos =
+          await respuestaPermisos.json();
+
+        const p = datosPermisos.permisos;
+
+        const valido = Boolean(
+          datosPermisos.ok === true &&
+          datosPermisos.permitido === true &&
+          datosPermisos.modulo ===
+            "BIENESTAR_ANIMAL" &&
+          datosPermisos.accion === "LEER" &&
+          datosPermisos.motivo === "AUTORIZADO" &&
+          datosPermisos.contratoPermisos ===
+            "SIA-PERMISOS-BA-01" &&
+          p &&
+          typeof p === "object" &&
+          !Array.isArray(p) &&
+          Object.keys(p).length === 5 &&
+          p.CONSULTAR === true &&
+          p.CAPTURA_LOCAL === true &&
+          p.ESCRIBIR === false &&
+          p.ADMINISTRAR === false &&
+          p.SINCRONIZAR === false
+        );
+
+        if (!valido) {
+          throw new Error(
+            "CONTRATO_PERMISOS_NO_VALIDO"
+          );
+        }
+
+        sessionStorage.setItem(
+          "SIA_BA_PERMISOS_05G21I",
+          JSON.stringify({
+            usuarioId: responsable.usuarioId,
+            verificadoEn: responsable.verificadoEn,
+            contrato: "SIA-PERMISOS-BA-01",
+            permisos: {
+              CONSULTAR: true,
+              CAPTURA_LOCAL: true,
+              ESCRIBIR: false,
+              ADMINISTRAR: false,
+              SINCRONIZAR: false
+            }
+          })
+        );
+
+      } catch (error) {
+
+        // No reutilizar permisos anteriores.
+        sessionStorage.removeItem(
+          "SIA_BA_PERMISOS_05G21I"
+        );
+
+        // La consulta adicional no interrumpe
+        // el acceso LEER que ya fue autorizado.
+        // No conceder permisos nuevos.
+
+        console.warn(
+          "Permisos adicionales no disponibles."
+        );
+      }
 
 
 
