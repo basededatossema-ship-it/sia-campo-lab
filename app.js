@@ -959,25 +959,26 @@ async function mostrarRegistros() {
         f.poblacionComunidad
       );
 
+      
+      // SIA-BIENESTAR-05G.23C.1
+      // Presentar solo los campos
+      // correspondientes a la zona.
+
       agregarSeccion("Ubicación");
       agregarCampo("Zona", u.zona);
-      agregarCampo(
-        "Comuna",
-        u.zona === "URBANA" ? u.comuna : null
-      );
-      agregarCampo(
-        "Barrio",
-        u.zona === "URBANA" ? u.barrio : null
-      );
-      agregarCampo(
-        "Corregimiento",
-        u.zona === "RURAL" ? u.corregimiento : null
-      );
-      agregarCampo(
-        "Vereda",
-        u.zona === "RURAL" ? u.vereda : null
-      );
+
+      if (u.zona === "URBANA") {
+        agregarCampo("Comuna", u.comuna);
+        agregarCampo("Barrio", u.barrio);
+      }
+
+      if (u.zona === "RURAL") {
+        agregarCampo("Corregimiento", u.corregimiento);
+        agregarCampo("Vereda", u.vereda);
+      }
+
       agregarCampo("Sitio", u.lugar);
+
       agregarCampo("Latitud", u.latitud);
       agregarCampo("Longitud", u.longitud);
 
