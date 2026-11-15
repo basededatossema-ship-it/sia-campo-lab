@@ -73,6 +73,39 @@ html:not(.sia-formulario-autorizado) body {
       antiguedad <= 72 * 60 * 60 * 1000
     );
 
+    // SIA-BIENESTAR-05G.21K.2
+    // Verificar CAPTURA_LOCAL para la
+    // misma identidad institucional.
+    // No modificar el control LEER existente.
+
+    if (autorizado) {
+
+      const contrato = JSON.parse(
+        sessionStorage.getItem(
+          "SIA_BA_PERMISOS_05G21I"
+        ) || "null"
+      );
+
+      const p = contrato && contrato.permisos;
+
+      autorizado = Boolean(
+        contrato &&
+        contrato.usuarioId === identidad.usuarioId &&
+        contrato.verificadoEn === identidad.verificadoEn &&
+        contrato.contrato === "SIA-PERMISOS-BA-01" &&
+        p &&
+        typeof p === "object" &&
+        !Array.isArray(p) &&
+        Object.keys(p).length === 5 &&
+        p.CONSULTAR === true &&
+        p.CAPTURA_LOCAL === true &&
+        p.ESCRIBIR === false &&
+        p.ADMINISTRAR === false &&
+        p.SINCRONIZAR === false
+      );
+    }
+
+
   } catch (error) {
     autorizado = false;
   }
