@@ -1276,7 +1276,26 @@ function verificarTitularFormulario05G16D5() {
     permisoCapturaVigente = false;
   }
 
-    if (
+  // SIA-BIENESTAR-05G.22C.5
+  // Comprobar vigencia de la identidad
+  // al retomar el formulario.
+
+  const fechaVerificacion = Date.parse(
+    identidadFormulario.verificadoEn
+  );
+
+  const antiguedadIdentidad =
+    Date.now() - fechaVerificacion;
+
+  const identidadVigente = Boolean(
+    Number.isFinite(fechaVerificacion) &&
+    antiguedadIdentidad >= 0 &&
+    antiguedadIdentidad <=
+      72 * 60 * 60 * 1000
+  );
+
+      if (
+    identidadVigente &&
     permisoCapturaVigente &&
     identidadLocal &&
     accesoGoogle &&
