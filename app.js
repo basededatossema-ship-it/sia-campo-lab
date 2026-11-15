@@ -653,6 +653,47 @@ function actualizarIdentidadPanel05G18B() {
 
 
 
+/**
+ * SIA-BIENESTAR-05G.23C.3
+ * Formato visual compartido.
+ * No modifica datos ni IndexedDB.
+ */
+function formatearValorFicha05G23C3(etiqueta, valor) {
+
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+    return "No registrado";
+  }
+
+  if (
+    [
+      "Fecha de visita",
+      "Fecha de actividad",
+      "Fecha del informe",
+      "Fecha del radicado"
+    ].includes(etiqueta) &&
+    typeof valor === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(valor)
+  ) {
+    const [anio, mes, dia] = valor.split("-");
+    return `${dia}/${mes}/${anio}`;
+  }
+
+  if (
+    (etiqueta === "Latitud" ||
+     etiqueta === "Longitud") &&
+    typeof valor === "number" &&
+    Number.isFinite(valor)
+  ) {
+    return valor.toFixed(6);
+  }
+
+  return String(valor);
+}
+
 async function mostrarRegistros() {
   actualizarIdentidadPanel05G18B();
   // SIA-BIENESTAR-05G.16C
@@ -933,11 +974,7 @@ async function mostrarRegistros() {
         const dato = document.createElement("span");
 
         dato.textContent =
-          valor === null ||
-          valor === undefined ||
-          valor === ""
-            ? "No registrado"
-            : String(valor);
+        formatearValorFicha05G23C3(etiqueta, valor);
 
         fila.append(nombre, dato);
         contenido.appendChild(fila);
@@ -1053,11 +1090,7 @@ async function mostrarRegistros() {
         nombre.textContent = etiqueta + ": ";
 
         dato.textContent =
-          valor === null ||
-          valor === undefined ||
-          valor === ""
-            ? "No registrado"
-            : String(valor);
+          formatearValorFicha05G23C3(etiqueta, valor);
 
         fila.append(nombre, dato);
         contenidoSens.appendChild(fila);
