@@ -731,7 +731,56 @@ async function mostrarRegistros() {
     return;
   }
 
+  
+  // SIA-BIENESTAR-05G.22E.1
+  // Conservar el estado autorizado antes
+  // de iniciar la lectura de IndexedDB.
+
+  const identidadAntes = sessionStorage.getItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
+  const accesoAntes = sessionStorage.getItem(
+    "SIA_BA_ACCESO_GOOGLE_05G19A"
+  );
+
+  const permisosAntes = sessionStorage.getItem(
+    "SIA_BA_PERMISOS_05G21I"
+  );
+
   const todos = await consultarRegistros();
+
+  // Si alguno de estos elementos cambió
+  // durante la lectura, descartar el
+  // resultado sin mostrar registros.
+
+  const sesionSinCambios = Boolean(
+    identidadAntes &&
+    accesoAntes &&
+    permisosAntes &&
+    identidadAntes === sessionStorage.getItem(
+      "SIA_BA_IDENTIDAD_05G14"
+    ) &&
+    accesoAntes === sessionStorage.getItem(
+      "SIA_BA_ACCESO_GOOGLE_05G19A"
+    ) &&
+    permisosAntes === sessionStorage.getItem(
+      "SIA_BA_PERMISOS_05G21I"
+    )
+  );
+
+  if (!sesionSinCambios) {
+    contenedor.replaceChildren();
+
+    $("contador").textContent =
+      "CONSULTA INTERRUMPIDA.\n" +
+      "La sesión o los permisos cambiaron " +
+      "durante la lectura.\n" +
+      "Vuelve a validar tu identidad.";
+
+    return;
+  }
+
 
   // SIA-BIENESTAR-05G.16C.1
   // Comprobar nuevamente la identidad
