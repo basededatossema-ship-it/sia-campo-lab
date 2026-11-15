@@ -461,6 +461,21 @@ a[href="./formularios-ba.html"]:focus-visible {
 </div>
 
 
+<!-- SIA-BIENESTAR-05G.21J.2 -->
+<!-- Presentacion informativa de permisos -->
+
+<section class="card" id="permisosPanel05G21J2">
+  <h2>Permisos institucionales</h2>
+
+  <div id="estadoPermisos05G21J2"
+       class="status"
+       role="status"
+       aria-live="polite"
+       style="white-space: pre-line;">
+    Verificando permisos institucionales...
+  </div>
+</section>
+
 <!-- SIA-BIENESTAR-05G.20A -->
 <!-- Estado informativo de trabajo de campo -->
 
@@ -632,6 +647,94 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
 
 </main>
 
+
+<script>
+/**
+ * SIA-BIENESTAR-05G.21J.2
+ *
+ * Presentacion de permisos centrales.
+ * No concede permisos.
+ * No modifica formularios ni registros.
+ */
+(function () {
+  "use strict";
+
+  const salida = document.getElementById(
+    "estadoPermisos05G21J2"
+  );
+
+  if (!salida) return;
+
+  const noVerificados =
+    "PERMISOS ADICIONALES NO VERIFICADOS\n" +
+    "La consulta de permisos institucionales " +
+    "no esta disponible para esta sesion.";
+
+  salida.textContent = noVerificados;
+
+  try {
+    const identidad = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_IDENTIDAD_05G14"
+      ) || "null"
+    );
+
+    const acceso = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_ACCESO_GOOGLE_05G19A"
+      ) || "null"
+    );
+
+    const contrato = JSON.parse(
+      sessionStorage.getItem(
+        "SIA_BA_PERMISOS_05G21I"
+      ) || "null"
+    );
+
+    if (
+      !identidad ||
+      !acceso ||
+      !contrato ||
+      identidad.modulo !== "BIENESTAR_ANIMAL" ||
+      identidad.permiso !== "LEER" ||
+      identidad.usuarioId !== acceso.usuarioId ||
+      identidad.usuarioId !== contrato.usuarioId ||
+      identidad.verificadoEn !== acceso.verificadoEn ||
+      identidad.verificadoEn !== contrato.verificadoEn ||
+      contrato.contrato !== "SIA-PERMISOS-BA-01"
+    ) {
+      return;
+    }
+
+    const p = contrato.permisos;
+
+    if (
+      !p ||
+      typeof p !== "object" ||
+      Array.isArray(p) ||
+      Object.keys(p).length !== 5 ||
+      p.CONSULTAR !== true ||
+      p.CAPTURA_LOCAL !== true ||
+      p.ESCRIBIR !== false ||
+      p.ADMINISTRAR !== false ||
+      p.SINCRONIZAR !== false
+    ) {
+      return;
+    }
+
+    salida.textContent =
+      "PERMISOS INSTITUCIONALES VERIFICADOS\n\n" +
+      "Consultar: AUTORIZADO\n" +
+      "Captura local: AUTORIZADO\n" +
+      "Escritura central: NO AUTORIZADO\n" +
+      "Administracion: NO AUTORIZADO\n" +
+      "Sincronizacion: DESHABILITADA";
+
+  } catch (error) {
+    salida.textContent = noVerificados;
+  }
+})();
+</script>
 
 <script src="./contrato-ba.js" defer></script>
 <script src="./app.js" defer></script>
