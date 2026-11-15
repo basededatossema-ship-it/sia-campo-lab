@@ -649,15 +649,26 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
     "cerrarSesion05G19D"
   );
 
-  function invalidarSesion() {
-    sessionStorage.removeItem(
-      "SIA_BA_IDENTIDAD_05G14"
-    );
+  
+function invalidarSesion() {
 
-    sessionStorage.removeItem(
-      "SIA_BA_ACCESO_GOOGLE_05G19A"
-    );
-  }
+  sessionStorage.removeItem(
+    "SIA_BA_IDENTIDAD_05G14"
+  );
+
+  sessionStorage.removeItem(
+    "SIA_BA_ACCESO_GOOGLE_05G19A"
+  );
+
+  // SIA-BIENESTAR-05G.21J.1
+  // Invalidar también los permisos
+  // asociados a la sesión anterior.
+
+  sessionStorage.removeItem(
+    "SIA_BA_PERMISOS_05G21I"
+  );
+}
+
 
   function irAutenticacion() {
     window.location.replace(
