@@ -828,13 +828,39 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
 
     salida.appendChild(encabezado);
 
+    
+    // SIA-BIENESTAR-05G.22C.2
+    // Presentacion basada en permisos
+    // previamente validados.
+
     const capacidades = [
-      ["Consulta de registros", "Autorizado", true],
-      ["Captura local", "Autorizado", true],
-      ["Escritura central", "No habilitado", false],
-      ["Administración", "No habilitado", false],
-      ["Sincronización", "Deshabilitada", false]
+      [
+        "Consulta de registros",
+        p.CONSULTAR ? "Autorizado" : "No habilitado",
+        p.CONSULTAR
+      ],
+      [
+        "Captura local",
+        p.CAPTURA_LOCAL ? "Autorizado" : "No habilitado",
+        p.CAPTURA_LOCAL
+      ],
+      [
+        "Escritura central",
+        p.ESCRIBIR ? "Autorizado" : "No habilitado",
+        p.ESCRIBIR
+      ],
+      [
+        "Administración",
+        p.ADMINISTRAR ? "Autorizado" : "No habilitado",
+        p.ADMINISTRAR
+      ],
+      [
+        "Sincronización",
+        p.SINCRONIZAR ? "Habilitada" : "Deshabilitada",
+        p.SINCRONIZAR
+      ]
     ];
+
 
     capacidades.forEach(([nombre, estado, habilitado]) => {
       const fila = document.createElement("div");
