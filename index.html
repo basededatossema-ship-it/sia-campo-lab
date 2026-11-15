@@ -687,44 +687,14 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
     "no esta disponible para esta sesion.";
 
   
-  // SIA-BIENESTAR-05G.21L
-  // Mostrar diagnostico tecnico limitado.
-
   
-const codigosPermitidos = [
-  "CONTRATO_RECIBIDO_Y_GUARDADO",
-  "TIEMPO_AGOTADO_PERMISOS",
-  "ERROR_HTTP_PERMISOS",
-  "CONTRATO_PERMISOS_NO_VALIDO",
-  "ERROR_COMUNICACION_PERMISOS",
-  "ERROR_CONSULTA_PERMISOS",
-  "CENTRAL_TOKEN_REQUERIDO",
-  "CENTRAL_ACCESO_NO_AUTORIZADO",
-  "CENTRAL_CONSULTA_RECHAZADA",
-  "CENTRAL_RECHAZO_NO_IDENTIFICADO",
-  "ESTRUCTURA_PERMISOS_INVALIDA"
-];
+  // SIA-BIENESTAR-05G.22A
+  // Presentacion institucional sin
+  // diagnosticos tecnicos visibles.
+  // Mantener rechazo seguro por defecto.
 
+  salida.textContent = noVerificados;
 
-  let codigoDiagnostico = "SIN_DIAGNOSTICO";
-
-  try {
-    const codigo = sessionStorage.getItem(
-      "SIA_BA_DIAGNOSTICO_05G21L"
-    );
-
-    if (codigosPermitidos.includes(codigo)) {
-      codigoDiagnostico = codigo;
-    }
-  } catch (_) {
-    codigoDiagnostico =
-      "DIAGNOSTICO_NO_DISPONIBLE";
-  }
-
-  salida.textContent =
-    noVerificados +
-    "\n\nDiagnostico: " +
-    codigoDiagnostico;
 
   try {
     const identidad = JSON.parse(
