@@ -1019,6 +1019,178 @@ async function mostrarRegistros() {
       elemento.appendChild(ficha);
     }
 
+    // SIA-BIENESTAR-05G.23A.3
+    // Ficha de consulta de Sensibilización.
+    // Lectura exclusiva. Sin escritura en IndexedDB.
+
+    if (registro.tipo === "SENSIBILIZACION") {
+
+      const fichaSens = document.createElement("details");
+      const encabezadoSens = document.createElement("summary");
+
+      encabezadoSens.textContent =
+        "Ver detalle de la actividad";
+
+      encabezadoSens.style.cursor = "pointer";
+      encabezadoSens.style.fontWeight = "600";
+      encabezadoSens.style.padding = "12px 0";
+
+      fichaSens.appendChild(encabezadoSens);
+
+      const contenidoSens = document.createElement("div");
+
+      const fSens = registro.formulario || {};
+      const uSens = fSens.ubicacion || {};
+      const autoriaSens =
+        registro.autoriaInstitucional || {};
+
+      function campoSens(etiqueta, valor) {
+        const fila = document.createElement("p");
+        const nombre = document.createElement("strong");
+        const dato = document.createElement("span");
+
+        nombre.textContent = etiqueta + ": ";
+
+        dato.textContent =
+          valor === null ||
+          valor === undefined ||
+          valor === ""
+            ? "No registrado"
+            : String(valor);
+
+        fila.append(nombre, dato);
+        contenidoSens.appendChild(fila);
+      }
+
+      function seccionSens(nombre) {
+        const tituloSeccion = document.createElement("h4");
+        tituloSeccion.textContent = nombre;
+        contenidoSens.appendChild(tituloSeccion);
+      }
+
+      seccionSens("Información de Sensibilización");
+      campoSens("Meta", fSens.meta);
+      campoSens("Eje estratégico", fSens.ejeEstrategico);
+      campoSens("Temática", fSens.tematica);
+      campoSens("Fecha de actividad", fSens.fechaActividad);
+
+      seccionSens("Informe y radicado");
+      campoSens("Número de informe", fSens.numeroInforme);
+      campoSens("Fecha del informe", fSens.fechaInforme);
+      campoSens("Número de radicado", fSens.numeroRadicado);
+      campoSens("Fecha del radicado", fSens.fechaRadicado);
+
+      // Mantener los grupos y las etiquetas
+      // utilizados en los formularios originales.
+
+      const gruposSens = [
+        ["Género", [
+          ["femenino", "Femenino"],
+          ["masculino", "Masculino"]
+        ]],
+        ["Edad", [
+          ["menores18", "Menores de 18 años"],
+          ["edad18a28", "De 18 a 28 años"],
+          ["edad29a59", "De 29 a 59 años"],
+          ["mayores60", "Mayores de 60 años"]
+        ]],
+        ["Víctimas del conflicto armado", [
+          ["desplazamiento", "Desplazamiento"],
+          ["otroHechoVictimizante", "Otro hecho victimizante"],
+          ["otrasVictimas", "Otros"]
+        ]],
+        ["Situación poblacional", [
+          ["discapacitado", "Discapacitado"],
+          ["desmovilizado", "Desmovilizado(a)"],
+          ["reincorporado", "Reincorporado(a)"],
+          ["gestante", "Gestante"],
+          ["cabezaHogar", "Cabeza de hogar"],
+          ["migrante", "Migrante"],
+          ["adultoMayor", "Adulto mayor"],
+          ["ninguno", "Ninguno"]
+        ]],
+        ["Grupo étnico", [
+          ["afrodescendiente", "Afrodescendiente"],
+          ["indigena", "Indígena"],
+          ["rom", "Rom"]
+        ]],
+        ["Orientación sexual", [
+          ["heterosexual", "Heterosexual"],
+          ["osigd", "OSIGD"]
+        ]]
+      ];
+
+      seccionSens("Alcance poblacional");
+
+      const alcanceSens = fSens.alcancePoblacional || {};
+
+      for (const [grupo, campos] of gruposSens) {
+        seccionSens(grupo);
+
+        for (const [clave, etiqueta] of campos) {
+          campoSens(etiqueta, alcanceSens[clave]);
+        }
+      }
+
+      seccionSens("Ubicación");
+      campoSens("Zona", uSens.zona);
+
+      if (uSens.zona === "URBANA") {
+        campoSens("Comuna", uSens.comuna);
+        campoSens("Barrio", uSens.barrio);
+      }
+
+      if (uSens.zona === "RURAL") {
+        campoSens("Corregimiento", uSens.corregimiento);
+        campoSens("Vereda", uSens.vereda);
+      }
+
+      campoSens("Sitio", uSens.lugar);
+      campoSens("Latitud", uSens.latitud);
+      campoSens("Longitud", uSens.longitud);
+
+      seccionSens("Identificación institucional");
+      campoSens("Responsable", registro.responsable);
+      campoSens(
+        "Usuario institucional",
+        autoriaSens.usuarioId
+      );
+      campoSens("UUID", registro.id);
+      campoSens("Operación", registro.operacion_id);
+
+      // Revalidar la sesión antes de
+      // presentar información detallada.
+
+      fichaSens.addEventListener("toggle", function () {
+        if (!fichaSens.open) return;
+
+        const autorizadoSens = Boolean(
+          usuarioListado05G16B() === usuarioId &&
+          identidadAntes === sessionStorage.getItem(
+            "SIA_BA_IDENTIDAD_05G14"
+          ) &&
+          accesoAntes === sessionStorage.getItem(
+            "SIA_BA_ACCESO_GOOGLE_05G19A"
+          ) &&
+          permisosAntes === sessionStorage.getItem(
+            "SIA_BA_PERMISOS_05G21I"
+          )
+        );
+
+        if (!autorizadoSens) {
+          fichaSens.open = false;
+          contenedor.replaceChildren();
+
+          $("contador").textContent =
+            "CONSULTA NO DISPONIBLE. " +
+            "Verifica nuevamente tu sesión institucional.";
+        }
+      });
+
+      fichaSens.appendChild(contenidoSens);
+      elemento.appendChild(fichaSens);
+    }
+
     
     // P04-B2: preparar manualmente la
     // sincronizacion de un borrador.
