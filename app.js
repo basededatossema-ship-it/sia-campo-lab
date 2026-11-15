@@ -1105,6 +1105,17 @@ async function mostrarRegistros() {
         dato.textContent =
           formatearValorFicha05G23C3(etiqueta, valor);
 
+        // SIA-BIENESTAR-05G.23C.5
+        // Estilo visual de campos sin información.
+        if (
+          valor === null ||
+          valor === undefined ||
+          valor === ""
+        ) {
+          dato.style.color = "#667085";
+          dato.style.fontStyle = "italic";
+        }
+
         fila.append(nombre, dato);
         contenidoSens.appendChild(fila);
       }
