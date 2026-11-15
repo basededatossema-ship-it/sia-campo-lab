@@ -278,8 +278,12 @@ if (!autorizado) {
       line-height: 1.5;
     }
 
-    /* SIA-BIENESTAR-05G.21K.1 */
+/* SIA-BIENESTAR-05G.21K.1 */
 #capturaPermitida05G21K1[hidden] {
+  display: none !important;
+}
+/* SIA-BIENESTAR-05G.21K.4 */
+#consultaPermitida05G21K4[hidden] {
   display: none !important;
 }
     
@@ -602,8 +606,12 @@ a[href="./formularios-ba.html"]:focus-visible {
     </form>
   </section>
 
-  <section class="card">
-    <h2>Registros locales</h2>
+  
+<section class="card"
+         id="consultaPermitida05G21K4"
+         hidden>
+  <h2>Registros locales</h2>
+
 
     <p id="contador" class="empty">
       Inicializando...
@@ -780,6 +788,19 @@ const codigosPermitidos = [
     if (captura && p.CAPTURA_LOCAL === true) {
       captura.hidden = false;
     }
+    
+    // SIA-BIENESTAR-05G.21K.4
+    // Mostrar registros locales únicamente
+    // con contrato institucional validado.
+    
+    const consulta = document.getElementById(
+      "consultaPermitida05G21K4"
+    );
+    
+    if (consulta && p.CONSULTAR === true) {
+      consulta.hidden = false;
+    }
+
 
     salida.textContent =
       "PERMISOS INSTITUCIONALES VERIFICADOS\n\n" +
