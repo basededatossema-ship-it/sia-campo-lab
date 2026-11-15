@@ -980,7 +980,7 @@ function invalidarSesion() {
   // Revalidar identidad y permisos
   // cuando se restaura el panel.
 
-  window.addEventListener("pageshow", function () {
+  function revalidarPanel05G22D4() {
 
     let valido = false;
 
@@ -1080,13 +1080,32 @@ function invalidarSesion() {
       if (captura) captura.hidden = true;
       if (consulta) consulta.hidden = true;
 
+      
       irAutenticacion();
     }
-  });
+  }
 
+  // SIA-BIENESTAR-05G.22D.4
+  // Reutilizar una única validación
+  // para navegación y retorno del iPhone.
+
+  window.addEventListener(
+    "pageshow",
+    revalidarPanel05G22D4
+  );
+
+  document.addEventListener(
+    "visibilitychange",
+    function () {
+      if (document.visibilityState === "visible") {
+        revalidarPanel05G22D4();
+      }
+    }
+  );
 
 })();
 </script>
+
 
 
 </body>
