@@ -588,11 +588,40 @@ sessionStorage.removeItem(
           p.SINCRONIZAR === false
         );
 
-        if (!valido) {
-          throw new Error(
-            "CONTRATO_PERMISOS_NO_VALIDO"
-          );
-        }
+        
+if (!valido) {
+
+  // SIA-BIENESTAR-05G.21M
+  // Distinguir rechazo central de
+  // incompatibilidad del contrato.
+
+  let codigo = "ESTRUCTURA_PERMISOS_INVALIDA";
+
+  if (
+    datosPermisos &&
+    typeof datosPermisos === "object" &&
+    datosPermisos.ok === false
+  ) {
+    const motivo = datosPermisos.motivo;
+
+    if (motivo === "TOKEN_REQUERIDO") {
+      codigo = "CENTRAL_TOKEN_REQUERIDO";
+    } else if (
+      motivo === "ACCESO_NO_AUTORIZADO"
+    ) {
+      codigo = "CENTRAL_ACCESO_NO_AUTORIZADO";
+    } else if (
+      motivo === "CONSULTA_RECHAZADA"
+    ) {
+      codigo = "CENTRAL_CONSULTA_RECHAZADA";
+    } else {
+      codigo = "CENTRAL_RECHAZO_NO_IDENTIFICADO";
+    }
+  }
+
+  throw new Error(codigo);
+}
+
 
         sessionStorage.setItem(
           "SIA_BA_PERMISOS_05G21I",
@@ -632,11 +661,18 @@ sessionStorage.removeItem(
           error.message === "HTTP_PERMISOS"
         ) {
           codigo = "ERROR_HTTP_PERMISOS";
+        
         } else if (
-          error.message ===
-          "CONTRATO_PERMISOS_NO_VALIDO"
+          [
+            "CENTRAL_TOKEN_REQUERIDO",
+            "CENTRAL_ACCESO_NO_AUTORIZADO",
+            "CENTRAL_CONSULTA_RECHAZADA",
+            "CENTRAL_RECHAZO_NO_IDENTIFICADO",
+            "ESTRUCTURA_PERMISOS_INVALIDA"
+          ].includes(error.message)
         ) {
-          codigo = "CONTRATO_PERMISOS_NO_VALIDO";
+          codigo = error.message;
+
         } else if (
           error.name === "TypeError"
         ) {
