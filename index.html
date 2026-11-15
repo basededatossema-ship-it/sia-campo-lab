@@ -670,10 +670,42 @@ Aplicación institucional de campo. Los borradores permanecen en el dispositivo.
     "La consulta de permisos institucionales " +
     "no esta disponible para esta sesion.";
 
-  salida.textContent = noVerificados;
+  
+  // SIA-BIENESTAR-05G.21L
+  // Mostrar diagnostico tecnico limitado.
+
+  const codigosPermitidos = [
+    "CONTRATO_RECIBIDO_Y_GUARDADO",
+    "TIEMPO_AGOTADO_PERMISOS",
+    "ERROR_HTTP_PERMISOS",
+    "CONTRATO_PERMISOS_NO_VALIDO",
+    "ERROR_COMUNICACION_PERMISOS",
+    "ERROR_CONSULTA_PERMISOS"
+  ];
+
+  let codigoDiagnostico = "SIN_DIAGNOSTICO";
+
+  try {
+    const codigo = sessionStorage.getItem(
+      "SIA_BA_DIAGNOSTICO_05G21L"
+    );
+
+    if (codigosPermitidos.includes(codigo)) {
+      codigoDiagnostico = codigo;
+    }
+  } catch (_) {
+    codigoDiagnostico =
+      "DIAGNOSTICO_NO_DISPONIBLE";
+  }
+
+  salida.textContent =
+    noVerificados +
+    "\n\nDiagnostico: " +
+    codigoDiagnostico;
 
   try {
     const identidad = JSON.parse(
+
       sessionStorage.getItem(
         "SIA_BA_IDENTIDAD_05G14"
       ) || "null"
