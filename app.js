@@ -900,6 +900,125 @@ async function mostrarRegistros() {
       operacionRegistro
     );
 
+    // SIA-BIENESTAR-05G.23A.1
+    // Ficha de consulta de Visita Técnica.
+    // Lectura exclusiva. No modifica IndexedDB.
+
+    if (registro.tipo === "VISITA_TECNICA") {
+
+      const ficha = document.createElement("details");
+      const encabezado = document.createElement("summary");
+
+      encabezado.textContent =
+        "Ver detalle de la actividad";
+
+      encabezado.style.cursor = "pointer";
+      encabezado.style.fontWeight = "600";
+      encabezado.style.padding = "12px 0";
+
+      ficha.appendChild(encabezado);
+
+      const contenido = document.createElement("div");
+
+      const f = registro.formulario || {};
+      const u = f.ubicacion || {};
+      const autoria = registro.autoriaInstitucional || {};
+
+      function agregarCampo(etiqueta, valor) {
+        const fila = document.createElement("p");
+        const nombre = document.createElement("strong");
+
+        nombre.textContent = etiqueta + ": ";
+
+        const dato = document.createElement("span");
+
+        dato.textContent =
+          valor === null ||
+          valor === undefined ||
+          valor === ""
+            ? "No registrado"
+            : String(valor);
+
+        fila.append(nombre, dato);
+        contenido.appendChild(fila);
+      }
+
+      function agregarSeccion(nombre) {
+        const subtitulo = document.createElement("h4");
+        subtitulo.textContent = nombre;
+        contenido.appendChild(subtitulo);
+      }
+
+      agregarSeccion("Información de la visita");
+      agregarCampo("Fecha de visita", f.fechaVisita);
+      agregarCampo("Asunto", f.asunto);
+      agregarCampo("Número de informe", f.numeroInforme);
+      agregarCampo("Fecha del informe", f.fechaInforme);
+      agregarCampo(
+        "Población-comunidad",
+        f.poblacionComunidad
+      );
+
+      agregarSeccion("Ubicación");
+      agregarCampo("Zona", u.zona);
+      agregarCampo(
+        "Comuna",
+        u.zona === "URBANA" ? u.comuna : null
+      );
+      agregarCampo(
+        "Barrio",
+        u.zona === "URBANA" ? u.barrio : null
+      );
+      agregarCampo(
+        "Corregimiento",
+        u.zona === "RURAL" ? u.corregimiento : null
+      );
+      agregarCampo(
+        "Vereda",
+        u.zona === "RURAL" ? u.vereda : null
+      );
+      agregarCampo("Sitio", u.lugar);
+      agregarCampo("Latitud", u.latitud);
+      agregarCampo("Longitud", u.longitud);
+
+      agregarSeccion("Identificación institucional");
+      agregarCampo("Responsable", registro.responsable);
+      agregarCampo("Usuario institucional", autoria.usuarioId);
+      agregarCampo("UUID", registro.id);
+      agregarCampo("Operación", registro.operacion_id);
+
+      // Antes de desplegar, comprobar que la
+      // sesión de consulta no haya cambiado.
+
+      ficha.addEventListener("toggle", function () {
+        if (!ficha.open) return;
+
+        const sigueAutorizado = Boolean(
+          usuarioListado05G16B() === usuarioId &&
+          identidadAntes === sessionStorage.getItem(
+            "SIA_BA_IDENTIDAD_05G14"
+          ) &&
+          accesoAntes === sessionStorage.getItem(
+            "SIA_BA_ACCESO_GOOGLE_05G19A"
+          ) &&
+          permisosAntes === sessionStorage.getItem(
+            "SIA_BA_PERMISOS_05G21I"
+          )
+        );
+
+        if (!sigueAutorizado) {
+          ficha.open = false;
+          contenedor.replaceChildren();
+          $("contador").textContent =
+            "CONSULTA NO DISPONIBLE. " +
+            "Verifica nuevamente tu sesión institucional.";
+        }
+      });
+
+      ficha.appendChild(contenido);
+      elemento.appendChild(ficha);
+    }
+
     
     // P04-B2: preparar manualmente la
     // sincronizacion de un borrador.
