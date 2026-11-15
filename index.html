@@ -920,6 +920,16 @@ function invalidarSesion() {
   sessionStorage.removeItem(
     "SIA_BA_PERMISOS_05G21I"
   );
+
+  
+  // SIA-BIENESTAR-05G.22C.3
+  // Eliminar el diagnostico temporal
+  // asociado a la sesion finalizada.
+
+  sessionStorage.removeItem(
+    "SIA_BA_DIAGNOSTICO_05G21L"
+  );
+
 }
 
 
