@@ -192,6 +192,10 @@ async function recibirCredencial(respuestaGoogle) {
 sessionStorage.removeItem(
   "SIA_BA_PERMISOS_05G21I"
 );
+
+sessionStorage.removeItem(
+  "SIA_BA_DIAGNOSTICO_05G21L"
+);
   let endpoint;
 
   try {
@@ -605,6 +609,10 @@ sessionStorage.removeItem(
             }
           })
         );
+        sessionStorage.setItem(
+          "SIA_BA_DIAGNOSTICO_05G21L",
+          "CONTRATO_RECIBIDO_Y_GUARDADO"
+        );
 
       
       } catch (error) {
@@ -612,6 +620,38 @@ sessionStorage.removeItem(
         sessionStorage.removeItem(
           "SIA_BA_PERMISOS_05G21I"
         );
+      
+        // SIA-BIENESTAR-05G.21L
+        // Diagnostico sin tokens ni datos personales.
+
+        let codigo = "ERROR_CONSULTA_PERMISOS";
+
+        if (error.name === "AbortError") {
+          codigo = "TIEMPO_AGOTADO_PERMISOS";
+        } else if (
+          error.message === "HTTP_PERMISOS"
+        ) {
+          codigo = "ERROR_HTTP_PERMISOS";
+        } else if (
+          error.message ===
+          "CONTRATO_PERMISOS_NO_VALIDO"
+        ) {
+          codigo = "CONTRATO_PERMISOS_NO_VALIDO";
+        } else if (
+          error.name === "TypeError"
+        ) {
+          codigo = "ERROR_COMUNICACION_PERMISOS";
+        }
+
+        try {
+          sessionStorage.setItem(
+            "SIA_BA_DIAGNOSTICO_05G21L",
+            codigo
+          );
+        } catch (_) {
+          // No interrumpir la sesion autorizada.
+        }
+
 
         console.warn(
           "Permisos adicionales no disponibles.",
