@@ -1059,6 +1059,19 @@ async function validarFormulario(evento) {
   boton.disabled = true;
 
   try {
+        
+    // SIA-BIENESTAR-05G.22C.6
+    // Revalidar identidad, vigencia y permiso
+    // CAPTURA_LOCAL antes de guardar.
+
+    verificarTitularFormulario05G16D5();
+
+    if (!identidadFormulario) {
+      throw new Error(
+        "IDENTIDAD_O_CAPTURA_LOCAL_NO_VIGENTE"
+      );
+    }
+
     if (
       !window.SIABanimContrato ||
       !window.SIABanimAlmacenamiento
