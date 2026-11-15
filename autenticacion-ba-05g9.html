@@ -514,6 +514,17 @@ sessionStorage.removeItem(
       }
 
     
+     
+       // SIA-BIENESTAR-05G.21J.3
+      // Temporizador independiente para permisos.
+
+      const controladorPermisos =
+        new AbortController();
+
+      const timeoutPermisos = setTimeout(
+        () => controladorPermisos.abort(),
+        20000
+      );
   
       /**
        * SIA - BIENESTAR ANIMAL
@@ -540,7 +551,7 @@ sessionStorage.removeItem(
                 "CONSULTAR_PERMISOS_BANIMAPP",
               idToken: idToken
             }),
-            signal: controlador.signal
+            signal: controladorPermisos.signal
           }
         );
 
@@ -595,21 +606,26 @@ sessionStorage.removeItem(
           })
         );
 
+      
       } catch (error) {
 
-        // No reutilizar permisos anteriores.
         sessionStorage.removeItem(
           "SIA_BA_PERMISOS_05G21I"
         );
 
-        // La consulta adicional no interrumpe
-        // el acceso LEER que ya fue autorizado.
-        // No conceder permisos nuevos.
-
         console.warn(
-          "Permisos adicionales no disponibles."
+          "Permisos adicionales no disponibles.",
+          error.name === "AbortError"
+            ? "TIEMPO_AGOTADO_PERMISOS"
+            : error.message
         );
+
+      } finally {
+
+        clearTimeout(timeoutPermisos);
+
       }
+
 
 
 
