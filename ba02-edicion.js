@@ -71,8 +71,21 @@
       f.ubicacion.lugar=texto(cambios.lugar,180);
       copia.lugar=f.ubicacion.lugar;
     }
-    for(const campo of ['asunto','tematica','numeroInforme','fechaInforme','numeroRadicado','fechaRadicado']) {
-      if(Object.hasOwn(cambios,campo)) f[campo]=texto(cambios[campo],500);
+    // Evitar recortes silenciosos: los borradores previos siguen intactos.
+    for (const campo of ['asunto','tematica']) {
+      if (Object.hasOwn(cambios,campo)) {
+        const valor = String(cambios[campo] ?? '').trim();
+        if (valor.length > 100) throw new Error(campo.toUpperCase() + '_MAXIMO_100_CARACTERES');
+        f[campo] = valor;
+      }
+    }
+    const limitesOpcionales = { numeroInforme:80, fechaInforme:10, numeroRadicado:80, fechaRadicado:10 };
+    for (const [campo, maximo] of Object.entries(limitesOpcionales)) {
+      if (Object.hasOwn(cambios,campo)) {
+        const valor = String(cambios[campo] ?? '').trim();
+        if (valor.length > maximo) throw new Error(campo.toUpperCase() + '_LONGITUD_INVALIDA');
+        f[campo] = valor;
+      }
     }
     // No tocar: id, operacion_id, autoriaInstitucional, estado, creadoEn, tipo, formularioVersion
     if(!window.SIABanimContrato ||
@@ -164,15 +177,29 @@
   function campo(form,etiqueta,prop,valor,max=180) {
     const label=document.createElement('label');label.textContent=etiqueta;
     const el=document.createElement('input');el.type='text';el.name=prop;el.maxLength=max;
-    el.value=valor==null?'':String(valor);label.appendChild(el);form.appendChild(label);
+    el.value=valor==null?'':String(valor);
+    label.appendChild(el);
+    if (prop === 'asunto' || prop === 'tematica') {
+      const contador=document.createElement('small');
+      contador.className='ba02-contador';
+      const actualizar=()=>{
+        const longitud=el.value.length;
+        contador.textContent=longitud+'/100 caracteres'+(longitud>100?' · Debes reducir el texto antes de guardar':'');
+        contador.style.color=longitud>100?'#b42318':'';
+      };
+      el.addEventListener('input',actualizar);
+      actualizar();
+      label.appendChild(contador);
+    }
+    form.appendChild(label);
   }
   function construirPanel(original,usuarioId,sello,mensaje,ancla,botonAbrir) {
     const panel=document.createElement('div');panel.className='ba02-panel';
     const titulo=document.createElement('h4');titulo.textContent='Edición autorizada de borrador local';
     const nota=document.createElement('p');nota.textContent='Solo campos descriptivos; UUID, titular y estado se conservan. Para guardar se requiere una nueva verificación Google.';
     const form=document.createElement('form'); const f=original.formulario;
-    if(original.tipo==='VISITA_TECNICA') campo(form,'Asunto','asunto',f.asunto,500);
-    if(original.tipo==='SENSIBILIZACION') campo(form,'Temática','tematica',f.tematica,500);
+    if(original.tipo==='VISITA_TECNICA') campo(form,'Asunto','asunto',f.asunto,100);
+    if(original.tipo==='SENSIBILIZACION') campo(form,'Temática','tematica',f.tematica,100);
     campo(form,'Lugar','lugar',f.ubicacion?.lugar,180);
     campo(form,'Número de informe','numeroInforme',f.numeroInforme,100);
     campo(form,'Fecha de informe (AAAA-MM-DD)','fechaInforme',f.fechaInforme,10);
