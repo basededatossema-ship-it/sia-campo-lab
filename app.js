@@ -1339,6 +1339,10 @@ if (
       }
     }
   );
+    // BA-02: solicitar autorización central antes de permitir editar.
+    if (window.SIABanimBA02) {
+      window.SIABanimBA02.agregarAccion(elemento, registro, usuarioId);
+    }
 
   elemento.appendChild(botonEliminar);
 }
