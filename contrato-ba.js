@@ -177,6 +177,11 @@ if (tipo === 'SENSIBILIZACION' &&
     // Maximo 80 caracteres.
     // Aplica a nuevas capturas y ediciones.
 
+    
+    // BA-02.C
+    // Limite documental de 20 caracteres.
+    // Aplica a captura y edicion.
+
     for (const campo of [
       "numeroInforme", "numeroRadicado"
     ]) {
@@ -187,13 +192,14 @@ if (tipo === 'SENSIBILIZACION' &&
         errores.push("DOCUMENTO_INVALIDO");
       } else if (
         typeof f[campo] === "string" &&
-        f[campo].length > 80
+        f[campo].length > 20
       ) {
         errores.push(
-          "DOCUMENTO_MAXIMO_80_CARACTERES"
+          "DOCUMENTO_MAXIMO_20_CARACTERES"
         );
       }
     }
+
 
     if (tipo === "VISITA TECNICA") {
       if (!texto(f.asunto)) {
