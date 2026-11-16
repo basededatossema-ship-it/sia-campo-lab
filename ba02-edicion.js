@@ -2,15 +2,16 @@
  * SIA / banimApp - BA-02 (candidato sin desplegar)
  * Edición EXCLUSIVAMENTE de borradores BA-05F propios en IndexedDB.
  * Necesita la ruta central AUTORIZAR_EDICION_BORRADOR_BANIMAPP publicada.
- * Un ID token GIS se obtiene por interacción del usuario en cada apertura y guardado;
- * nunca se escribe en storage ni en logs.
+ * Utiliza sesión temporal BA-02 emitida por el servidor en el ingreso normal.
+ * Nunca guarda el ID token Google. El permiso se revalida en cada operación.
  */
 (function () {
   'use strict';
   const CLIENT_ID = '539376159794-mp0qjge29fhkudf2tdp9cu8knfq3qhlv.apps.googleusercontent.com';
   const ENDPOINT = 'https://script.google.com/macros/s/AKfycbx8xZx31rH7LERYaSrwv6NzdNHjVKP0-AH_y6WZGSrp3IeOekC6JbgEFx-K4S0Ywg77/exec';
   const DB = 'SIA_CAMPO_PWA_LAB', STORE = 'borradores';
-  const OPERACION = 'AUTORIZAR_EDICION_BORRADOR_BANIMAPP';
+  const OPERACION = 'AUTORIZAR_EDICION_BA02_SESION';
+  const CLAVE_SESION = 'SIA_BA02_SESION_V1';
   const CONTRATO = 'SIA-BA02-CAPACIDAD-01';
   const SNAPSHOT_KEYS = ['SIA_BA_IDENTIDAD_05G14','SIA_BA_ACCESO_GOOGLE_05G19A','SIA_BA_PERMISOS_05G21I'];
   let ocupado = false;
@@ -117,62 +118,48 @@
   function mostrarError(mensajeEl, err) {
     mensajeEl.textContent='Edición no realizada: '+(err?.message||'ERROR_DE_AUTORIZACION');
   }
-  // Carga GIS cuando se necesita; index.html actualmente no incluye el cliente de Google.
-  // No se escribe el ID token en IndexedDB, localStorage ni sessionStorage.
-  let cargaGIS = null;
-  function asegurarGIS() {
-    if (window.google?.accounts?.id) return Promise.resolve();
-    if (cargaGIS) return cargaGIS;
-    cargaGIS = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      const temporizador = setTimeout(() => {
-        script.remove();
-        reject(new Error('GOOGLE_NO_DISPONIBLE'));
-      }, 12000);
-      script.onload = () => {
-        clearTimeout(temporizador);
-        if (window.google?.accounts?.id) resolve();
-        else reject(new Error('GOOGLE_NO_DISPONIBLE'));
-      };
-      script.onerror = () => {
-        clearTimeout(temporizador);
-        script.remove();
-        reject(new Error('GOOGLE_NO_DISPONIBLE'));
-      };
-      document.head.appendChild(script);
-    }).catch(error => { cargaGIS = null; throw error; });
-    return cargaGIS;
-  }
-  async function solicitarGoogle(contenedor,onToken) {
-    await asegurarGIS();
-    contenedor.replaceChildren();
-    window.google.accounts.id.initialize({
-      client_id:CLIENT_ID,auto_select:false,ux_mode:'popup',
-      callback: respuesta=>{
-        const token=respuesta?.credential;
-        if(typeof token==='string'&&token.length>100) void onToken(token);
-      }
-    });
-    window.google.accounts.id.renderButton(contenedor,{theme:'outline',size:'medium',text:'signin_with'});
-  }
-  async function autorizar(token,usuarioId) {
-    const ac=new AbortController(); const timer=setTimeout(()=>ac.abort(),20000);
+  // Sesión BA-02 emitida por el Servicio Central tras autenticación Google.
+  // Solamente se almacena una capacidad opaca con caducidad de cinco minutos.
+  // No se almacena la credencial Google ni se registran tokens.
+  async function autorizar(usuarioId, senal) {
+    const bruto = sessionStorage.getItem(CLAVE_SESION);
+    let sesion;
+    try { sesion = JSON.parse(bruto || 'null'); } catch (_) { sesion = null; }
+    if (!sesion || sesion.usuarioId !== usuarioId ||
+        typeof sesion.sesion !== 'string' ||
+        !Number.isFinite(sesion.expira) || Date.now() >= sesion.expira) {
+      sessionStorage.removeItem(CLAVE_SESION);
+      throw new Error('SESION_BA02_NO_DISPONIBLE. Vuelve a iniciar sesión institucional con permiso de edición activo.');
+    }
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 20000);
+    const cancelar = () => ac.abort();
+    if (senal) {
+      if (senal.aborted) ac.abort();
+      else senal.addEventListener('abort', cancelar, {once:true});
+    }
     try {
-      const resp=await fetch(ENDPOINT,{
-        method:'POST',mode:'cors',credentials:'omit',redirect:'follow',
+      const resp = await fetch(ENDPOINT, {
+        method:'POST', mode:'cors', credentials:'omit', redirect:'follow',
         headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({operacion:OPERACION,idToken:token}),signal:ac.signal
+        body:JSON.stringify({operacion:OPERACION, sesion:sesion.sesion}),signal:ac.signal
       });
-      if(!resp.ok) throw new Error('HTTP_AUTORIZACION_'+resp.status);
-      const datos=await resp.json();
-      if(datos?.ok!==true || datos.permitido!==true ||
-         datos.modulo!=='BIENESTAR_ANIMAL' || datos.accion!=='EDITAR_BORRADOR' ||
-         datos.contrato!==CONTRATO || datos.motivo!=='AUTORIZADO' ||
-         datos.usuarioId!==usuarioId) throw new Error('EDICION_NO_AUTORIZADA');
+      if (!resp.ok) throw new Error('HTTP_AUTORIZACION_'+resp.status);
+      const datos = await resp.json();
+      if (datos?.ok !== true || datos.permitido !== true ||
+          datos.modulo !== 'BIENESTAR_ANIMAL' || datos.accion !== 'EDITAR_BORRADOR' ||
+          datos.contrato !== CONTRATO || datos.motivo !== 'AUTORIZADO' ||
+          datos.usuarioId !== usuarioId) {
+        if (['SESION_VENCIDA','SESION_INVALIDA','EDICION_NO_AUTORIZADA'].includes(datos?.motivo)) {
+          sessionStorage.removeItem(CLAVE_SESION);
+        }
+        throw new Error(datos?.motivo || 'EDICION_NO_AUTORIZADA');
+      }
       return true;
-    } finally {clearTimeout(timer);}
+    } finally {
+      clearTimeout(timer);
+      if (senal) senal.removeEventListener('abort', cancelar);
+    }
   }
   function campo(form,etiqueta,prop,valor,max=180) {
     const label=document.createElement('label');label.textContent=etiqueta;
@@ -217,97 +204,57 @@
       if(identidad()!==usuarioId||selloSesion()!==sello) {mensaje.textContent='Sesión cambiada. Vuelve a entrar.';return;}
       const cambios={};for(const input of form.querySelectorAll('input[name]')) cambios[input.name]=input.value;
       let copia;try{copia=aplicarCambios(original,cambios);}catch(e){mostrarError(mensaje,e);return;}
-      mensaje.textContent='Confirma nuevamente tu identidad con Google para guardar.';
-      try {await solicitarGoogle(googleDiv,async token=>{
-        if(guardar.disabled)return;
-        guardar.disabled=true;
-        try {
-          await autorizar(token,usuarioId);
-          const resultado=await guardarAtomicamente(original,copia,usuarioId,sello);
-          mensaje.textContent='Borrador actualizado localmente: '+resultado.uuid;
-          panel.remove();ocupado=false;
-          if(typeof window.mostrarRegistros==='function') await window.mostrarRegistros();
-        } catch(err) {mostrarError(mensaje,err);} finally {guardar.disabled=false;}
-      });}catch(e){mostrarError(mensaje,e);}
+      mensaje.textContent='Verificando nuevamente autorización institucional para guardar…';
+      guardar.disabled = true;
+      try {
+        await autorizar(usuarioId);
+        const resultado = await guardarAtomicamente(original,copia,usuarioId,sello);
+        mensaje.textContent='Borrador actualizado localmente: '+resultado.uuid;
+        panel.remove();ocupado=false;
+        if (typeof window.mostrarRegistros === 'function') await window.mostrarRegistros();
+        else botonAbrir.disabled=false;
+      } catch (err) {mostrarError(mensaje,err);}
+      finally {guardar.disabled=false;}
     });
   }
   function agregarAccion(elemento,registro,usuarioId) {
     if (!propio(registro,usuarioId)) return;
-    const boton = document.createElement('button');
-    boton.type = 'button';
-    boton.className = 'secondary-button';
-    boton.textContent = 'Solicitar edición (BA-02)';
-    const mensaje = document.createElement('p');
-    mensaje.setAttribute('role','status');
+    const boton=document.createElement('button');
+    boton.type='button';boton.className='secondary-button';
+    boton.textContent='Solicitar edición (BA-02)';
+    const mensaje=document.createElement('p'); mensaje.setAttribute('role','status');
     elemento.append(boton,mensaje);
-
-    boton.addEventListener('click',async () => {
-      if (ocupado) {
-        mensaje.textContent = 'Existe una autorización o edición en curso. Cancélala antes de continuar.';
-        return;
+    boton.addEventListener('click',async()=>{
+      if (ocupado) {mensaje.textContent='Existe una edición en curso. Cancélala antes de continuar.';return;}
+      if (identidad()!==usuarioId) {mensaje.textContent='Identidad no vigente.';return;}
+      ocupado=true; boton.disabled=true;
+      const sello=selloSesion();
+      const cancelar=document.createElement('button');
+      cancelar.type='button'; cancelar.className='secondary-button';
+      cancelar.textContent='Cancelar solicitud de edición';
+      const ac=new AbortController();
+      let vigente=true; let editorAbierto=false;
+      elemento.appendChild(cancelar);
+      function terminar(texto) {
+        if (!vigente) return; vigente=false;
+        ac.abort(); cancelar.remove();
+        if (!editorAbierto) {ocupado=false; boton.disabled=false;}
+        if (texto) mensaje.textContent=texto;
       }
-      if (identidad() !== usuarioId) {
-        mensaje.textContent = 'Identidad no vigente. Vuelve a iniciar sesión.';
-        return;
-      }
-      ocupado = true;
-      boton.disabled = true;
-      const sello = selloSesion();
-      const googleDiv = document.createElement('div');
-      const cancelar = document.createElement('button');
-      cancelar.type = 'button';
-      cancelar.className = 'secondary-button';
-      cancelar.textContent = 'Cancelar solicitud de edición';
-      elemento.append(googleDiv,cancelar);
-      let vigente = true;
-      let temporizador = null;
-
-      function cerrarSolicitud(texto) {
-        if (!vigente) return;
-        vigente = false;
-        if (temporizador !== null) clearTimeout(temporizador);
-        googleDiv.remove();
-        cancelar.remove();
-        ocupado = false;
-        boton.disabled = false;
-        if (texto) mensaje.textContent = texto;
-      }
-      cancelar.addEventListener('click', () => {
-        cerrarSolicitud('Solicitud cancelada. Puedes intentarlo nuevamente.');
-      });
-      temporizador = setTimeout(() => {
-        cerrarSolicitud('Google no devolvió una respuesta. Solicitud cancelada; puedes reintentar.');
-      },60000);
-      mensaje.textContent = 'Pulsa el botón de Google que aparecerá debajo y selecciona tu cuenta institucional. Puedes cancelar esta solicitud.';
+      cancelar.addEventListener('click',()=>terminar('Solicitud cancelada. Puedes reintentar.'));
+      mensaje.textContent='Consultando tu autorización BA-02 sin repetir el inicio de sesión Google…';
       try {
-        await solicitarGoogle(googleDiv, async token => {
-          if (!vigente) return;
-          cancelar.disabled = true;
-          mensaje.textContent = 'Verificando autorización institucional…';
-          try {
-            await autorizar(token,usuarioId);
-            if (!vigente) return;
-            if (identidad() !== usuarioId || selloSesion() !== sello) {
-              throw new Error('SESION_CAMBIADA');
-            }
-            const actual = await leer(registro.id);
-            if (!vigente) return;
-            if (!propio(actual,usuarioId)) throw new Error('BORRADOR_NO_AUTORIZADO');
-            vigente = false;
-            if (temporizador !== null) clearTimeout(temporizador);
-            googleDiv.remove();
-            cancelar.remove();
-            construirPanel(actual,usuarioId,sello,mensaje,elemento,boton);
-            mensaje.textContent = 'Autorizado. Puedes modificar los campos descriptivos.';
-            // ocupado permanece activo mientras el editor está abierto.
-          } catch (error) {
-            if (vigente) cerrarSolicitud('Edición no realizada: ' + (error?.message || 'ERROR_DE_AUTORIZACION'));
-          } finally {
-            cancelar.disabled = false;
-          }
-        });
-      } catch (error) {
-        cerrarSolicitud('No fue posible mostrar Google: ' + (error?.message || 'GOOGLE_NO_DISPONIBLE'));
+        await autorizar(usuarioId,ac.signal);
+        if (!vigente) return;
+        if (identidad()!==usuarioId||selloSesion()!==sello) throw new Error('SESION_CAMBIADA');
+        const actual=await leer(registro.id);
+        if (!vigente) return;
+        if (!propio(actual,usuarioId)) throw new Error('BORRADOR_NO_AUTORIZADO');
+        editorAbierto=true; vigente=false; cancelar.remove();
+        construirPanel(actual,usuarioId,sello,mensaje,elemento,boton);
+        mensaje.textContent='Autorizado. Puedes editar los campos descriptivos.';
+      } catch(e) {
+        if (vigente) terminar('Edición no realizada: '+(e?.name==='AbortError'?'SOLICITUD_CANCELADA':e?.message||'AUTORIZACION_FALLIDA'));
       }
     });
   }
