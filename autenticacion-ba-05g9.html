@@ -730,21 +730,17 @@ if (!valido) {
       // después de verificar y conservar
       // la identidad institucional.
 
+            // BA-02.B — Transicion visual de acceso.
+      // No modifica identidad, permisos ni sesion.
+
       document.getElementById(
         "accesoFormularios"
-      ).hidden = false;
-
-
+      ).hidden = true;
 
       mostrar(
         "IDENTIDAD INSTITUCIONAL AUTORIZADA\n\n" +
-        "Responsable: " +
-          responsable.nombreCompleto + "\n" +
-        "ID institucional: " +
-          responsable.usuarioId + "\n" +
-        "Módulo: BIENESTAR_ANIMAL\n" +
-        "Permiso: LEER\n" +
-        "Sincronización: DESHABILITADA"
+        "Preparando el acceso al Panel Principal " +
+        "de Bienestar Animal..."
       );
       // SIA-BIENESTAR-05G.19B
       // Autorización satisfactoria.
