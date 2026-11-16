@@ -172,6 +172,11 @@ if (tipo === 'SENSIBILIZACION' &&
       }
     }
 
+        // BA-02.A.3
+    // Validacion de campos documentales.
+    // Maximo 80 caracteres.
+    // Aplica a nuevas capturas y ediciones.
+
     for (const campo of [
       "numeroInforme", "numeroRadicado"
     ]) {
@@ -180,6 +185,13 @@ if (tipo === 'SENSIBILIZACION' &&
         typeof f[campo] !== "string"
       ) {
         errores.push("DOCUMENTO_INVALIDO");
+      } else if (
+        typeof f[campo] === "string" &&
+        f[campo].length > 80
+      ) {
+        errores.push(
+          "DOCUMENTO_MAXIMO_80_CARACTERES"
+        );
       }
     }
 
