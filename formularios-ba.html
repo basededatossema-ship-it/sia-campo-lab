@@ -319,7 +319,8 @@ summary {font-weight:bold;cursor:pointer}
 <h2>Visita Técnica</h2>
 
 <label for="asunto">Asunto</label>
-<textarea id="asunto" maxlength="2000"></textarea>
+<textarea id="asunto" maxlength="100"></textarea>
+<small id="contadorAsuntoBA02" class="small" aria-live="polite">0/100 caracteres</small>
 
 <label for="fechaVisita">Fecha de la visita</label>
 <input type="date" id="fechaVisita">
@@ -360,7 +361,8 @@ summary {font-weight:bold;cursor:pointer}
 <select id="eje"></select>
 
 <label for="tematica">Temática</label>
-<textarea id="tematica" maxlength="2000"></textarea>
+<textarea id="tematica" maxlength="100"></textarea>
+<small id="contadorTematicaBA02" class="small" aria-live="polite">0/100 caracteres</small>
 
 <label for="fechaActividad">
   Fecha de actividad (automática)
@@ -473,6 +475,24 @@ summary {font-weight:bold;cursor:pointer}
 "use strict";
 
 const $ = id => document.getElementById(id);
+
+// BA-02: contador de longitud, sin escrituras ni alteración de borradores.
+for (const [campo, contador] of [
+  ['asunto', 'contadorAsuntoBA02'],
+  ['tematica', 'contadorTematicaBA02']
+]) {
+  const entrada = $(campo);
+  const salida = $(contador);
+  const actualizar = () => {
+    salida.textContent = entrada.value.length + '/100 caracteres';
+  };
+  entrada.addEventListener('input', actualizar);
+  document.getElementById('formulario').addEventListener('reset', () => {
+    // El navegador restablece los valores tras disparar el evento reset.
+    queueMicrotask(actualizar);
+  });
+  actualizar();
+}
 
 /**
  * SIA-BIENESTAR-05G.14B
