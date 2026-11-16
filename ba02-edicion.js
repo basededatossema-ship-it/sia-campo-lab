@@ -232,29 +232,83 @@
     });
   }
   function agregarAccion(elemento,registro,usuarioId) {
-    if(!propio(registro,usuarioId))return;
-    const boton=document.createElement('button');
-    boton.type='button';boton.className='secondary-button';boton.textContent='Solicitar edición (BA-02)';
-    const mensaje=document.createElement('p');mensaje.setAttribute('role','status');
+    if (!propio(registro,usuarioId)) return;
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'secondary-button';
+    boton.textContent = 'Solicitar edición (BA-02)';
+    const mensaje = document.createElement('p');
+    mensaje.setAttribute('role','status');
     elemento.append(boton,mensaje);
-    boton.addEventListener('click',async()=>{
-      if(ocupado){mensaje.textContent='Cierra la edición anterior.';return;}
-      if(identidad()!==usuarioId){mensaje.textContent='Identidad no vigente.';return;}
-      ocupado=true;boton.disabled=true;
-      const sello=selloSesion();
-      const googleDiv=document.createElement('div');elemento.appendChild(googleDiv);
-      mensaje.textContent='Identifícate con Google para consultar tu permiso de edición.';
-      try{await solicitarGoogle(googleDiv,async token=>{
-        try{
-          await autorizar(token,usuarioId);
-          if(identidad()!==usuarioId||selloSesion()!==sello)throw new Error('SESION_CAMBIADA');
-          const actual=await leer(registro.id);
-          if(!propio(actual,usuarioId))throw new Error('BORRADOR_NO_AUTORIZADO');
-          googleDiv.remove();
-          construirPanel(actual,usuarioId,sello,mensaje,elemento,boton);
-          mensaje.textContent='Autorizado. Puedes modificar los campos descriptivos.';
-        }catch(e){mostrarError(mensaje,e);googleDiv.remove();ocupado=false;boton.disabled=false;}
-      });}catch(e){mostrarError(mensaje,e);googleDiv.remove();ocupado=false;boton.disabled=false;}
+
+    boton.addEventListener('click',async () => {
+      if (ocupado) {
+        mensaje.textContent = 'Existe una autorización o edición en curso. Cancélala antes de continuar.';
+        return;
+      }
+      if (identidad() !== usuarioId) {
+        mensaje.textContent = 'Identidad no vigente. Vuelve a iniciar sesión.';
+        return;
+      }
+      ocupado = true;
+      boton.disabled = true;
+      const sello = selloSesion();
+      const googleDiv = document.createElement('div');
+      const cancelar = document.createElement('button');
+      cancelar.type = 'button';
+      cancelar.className = 'secondary-button';
+      cancelar.textContent = 'Cancelar solicitud de edición';
+      elemento.append(googleDiv,cancelar);
+      let vigente = true;
+      let temporizador = null;
+
+      function cerrarSolicitud(texto) {
+        if (!vigente) return;
+        vigente = false;
+        if (temporizador !== null) clearTimeout(temporizador);
+        googleDiv.remove();
+        cancelar.remove();
+        ocupado = false;
+        boton.disabled = false;
+        if (texto) mensaje.textContent = texto;
+      }
+      cancelar.addEventListener('click', () => {
+        cerrarSolicitud('Solicitud cancelada. Puedes intentarlo nuevamente.');
+      });
+      temporizador = setTimeout(() => {
+        cerrarSolicitud('Google no devolvió una respuesta. Solicitud cancelada; puedes reintentar.');
+      },60000);
+      mensaje.textContent = 'Pulsa el botón de Google que aparecerá debajo y selecciona tu cuenta institucional. Puedes cancelar esta solicitud.';
+      try {
+        await solicitarGoogle(googleDiv, async token => {
+          if (!vigente) return;
+          cancelar.disabled = true;
+          mensaje.textContent = 'Verificando autorización institucional…';
+          try {
+            await autorizar(token,usuarioId);
+            if (!vigente) return;
+            if (identidad() !== usuarioId || selloSesion() !== sello) {
+              throw new Error('SESION_CAMBIADA');
+            }
+            const actual = await leer(registro.id);
+            if (!vigente) return;
+            if (!propio(actual,usuarioId)) throw new Error('BORRADOR_NO_AUTORIZADO');
+            vigente = false;
+            if (temporizador !== null) clearTimeout(temporizador);
+            googleDiv.remove();
+            cancelar.remove();
+            construirPanel(actual,usuarioId,sello,mensaje,elemento,boton);
+            mensaje.textContent = 'Autorizado. Puedes modificar los campos descriptivos.';
+            // ocupado permanece activo mientras el editor está abierto.
+          } catch (error) {
+            if (vigente) cerrarSolicitud('Edición no realizada: ' + (error?.message || 'ERROR_DE_AUTORIZACION'));
+          } finally {
+            cancelar.disabled = false;
+          }
+        });
+      } catch (error) {
+        cerrarSolicitud('No fue posible mostrar Google: ' + (error?.message || 'GOOGLE_NO_DISPONIBLE'));
+      }
     });
   }
   window.SIABanimBA02=Object.freeze({agregarAccion});
