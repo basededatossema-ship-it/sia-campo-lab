@@ -80,7 +80,14 @@
         f[campo] = valor;
       }
     }
-    const limitesOpcionales = { numeroInforme:80, fechaInforme:10, numeroRadicado:80, fechaRadicado:10 };
+    
+const limitesOpcionales = {
+  numeroInforme: 20,
+  fechaInforme: 10,
+  numeroRadicado: 20,
+  fechaRadicado: 10
+};
+
     for (const [campo, maximo] of Object.entries(limitesOpcionales)) {
       if (Object.hasOwn(cambios,campo)) {
         const valor = String(cambios[campo] ?? '').trim();
@@ -163,8 +170,23 @@
   }
   function campo(form,etiqueta,prop,valor,max=180) {
     const label=document.createElement('label');label.textContent=etiqueta;
-    const el=document.createElement('input');el.type='text';el.name=prop;el.maxLength=max;
-    el.value=valor==null?'':String(valor);
+    
+const el = document.createElement('input');
+
+const esFecha = [
+  'fechaInforme',
+  'fechaRadicado'
+].includes(prop);
+
+el.type = esFecha ? 'date' : 'text';
+el.name = prop;
+
+if (!esFecha) {
+  el.maxLength = max;
+}
+
+el.value = valor == null ? '' : String(valor);
+
     label.appendChild(el);
     if (prop === 'asunto' || prop === 'tematica') {
       const contador=document.createElement('small');
@@ -188,10 +210,10 @@
     if(original.tipo==='VISITA_TECNICA') campo(form,'Asunto','asunto',f.asunto,100);
     if(original.tipo==='SENSIBILIZACION') campo(form,'Temática','tematica',f.tematica,100);
     campo(form,'Lugar','lugar',f.ubicacion?.lugar,180);
-    campo(form,'Número de informe','numeroInforme',f.numeroInforme,100);
+    campo(form,'Número de informe','numeroInforme',f.numeroInforme,20);
     campo(form,'Fecha de informe (AAAA-MM-DD)','fechaInforme',f.fechaInforme,10);
     if(original.tipo==='SENSIBILIZACION') {
-      campo(form,'Número de radicado','numeroRadicado',f.numeroRadicado,100);
+      campo(form,'Número de radicado','numeroRadicado',f.numeroRadicado,20);
       campo(form,'Fecha de radicado (AAAA-MM-DD)','fechaRadicado',f.fechaRadicado,10);
     }
     const guardar=document.createElement('button');guardar.type='submit';guardar.textContent='Solicitar autorización para guardar';
