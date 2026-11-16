@@ -138,6 +138,16 @@
       errores.push("FORMULARIO_INCOMPLETO");
       return {ok: false, errores};
     }
+// BA-02: límite institucional para nuevas capturas y ediciones.
+// No se modifican registros almacenados; se valida únicamente al guardar.
+if (tipo === 'VISITA TECNICA' &&
+    typeof f.asunto === 'string' && f.asunto.length > 100) {
+  errores.push('ASUNTO_MAXIMO_100_CARACTERES');
+}
+if (tipo === 'SENSIBILIZACION' &&
+    typeof f.tematica === 'string' && f.tematica.length > 100) {
+  errores.push('TEMATICA_MAXIMO_100_CARACTERES');
+}
 
     validarUbicacion(f.ubicacion, errores);
 
