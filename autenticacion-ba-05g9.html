@@ -198,6 +198,8 @@ sessionStorage.removeItem(
 sessionStorage.removeItem(
   "SIA_BA_DIAGNOSTICO_05G21L"
 );
+
+sessionStorage.removeItem('SIA_BA02_SESION_V1');
   let endpoint;
 
   try {
@@ -748,6 +750,60 @@ if (!valido) {
       // Autorización satisfactoria.
       // Redirección automática al panel principal.
       
+try {
+  const controladorBA02 = new AbortController();
+  const tiempoBA02 = setTimeout(
+    () => controladorBA02.abort(),
+    6500
+  );
+
+  try {
+    const respuestaBA02 = await fetch(endpoint, {
+      method: 'POST',
+      credentials: 'omit',
+      redirect: 'follow',
+      headers: {
+        'Content-Type': 'text/plain'
+      },
+      body: JSON.stringify({
+        operacion: 'EMITIR_SESION_EDICION_BANIMAPP',
+        idToken: idToken
+      }),
+      signal: controladorBA02.signal
+    });
+
+    if (respuestaBA02.ok) {
+      const datosBA02 = await respuestaBA02.json();
+
+      if (
+        datosBA02.ok === true &&
+        datosBA02.permitido === true &&
+        datosBA02.contrato === 'SIA-BA02-SESION-01' &&
+        datosBA02.accion === 'EMITIR_SESION_EDICION' &&
+        datosBA02.usuarioId === responsable.usuarioId &&
+        typeof datosBA02.sesion === 'string' &&
+        Number.isFinite(datosBA02.expira) &&
+        datosBA02.expira > Date.now() &&
+        datosBA02.expira <= Date.now() + 310000
+      ) {
+        sessionStorage.setItem(
+          'SIA_BA02_SESION_V1',
+          JSON.stringify({
+            usuarioId: datosBA02.usuarioId,
+            sesion: datosBA02.sesion,
+            expira: datosBA02.expira
+          })
+        );
+      }
+    }
+  } finally {
+    clearTimeout(tiempoBA02);
+  }
+} catch (_) {
+  // BA-01 continúa funcionando si BA-02
+  // no está disponible.
+}
+
       window.location.replace("./index.html");
 
     } else {
