@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>SIA — BA-03.G.6.1</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+body{font-family:system-ui,sans-serif;background:#f3f7f4;color:#193e32;padding:24px}
+main{max-width:500px;margin:30px auto;background:white;padding:24px;border-radius:16px}
+#googleButton{display:flex;justify-content:center;margin:20px 0}
+#estado{padding:16px;background:#e9f0eb;border-radius:10px;overflow-wrap:anywhere}
+</style>
+</head>
+<body><main>
+<h2>SIA — Diagnóstico BA-03.G.6.1</h2>
+<p>Comprueba el permiso de envío y la identidad institucional D.2. No envía formularios ni realiza escrituras.</p>
+<div id="googleButton"></div>
+<div id="estado" role="status" aria-live="polite">Preparando autenticación…</div>
+</main>
+<script>
+'use strict';
+const CLIENT_ID='539376159794-mp0qjge29fhkudf2tdp9cu8knfq3qhlv.apps.googleusercontent.com';
+const ENDPOINT='https://script.google.com/macros/s/AKfycbx8xZx31rH7LERYaSrwv6NzdNHjVKP0-AH_y6WZGSrp3IeOekC6JbgEFx-K4S0Ywg77/exec';
+const estado=document.getElementById('estado');
+let ocupado=false;
+async function verificar(googleResponse){
+  if(ocupado)return;
+  const idToken=googleResponse?.credential;
+  if(typeof idToken!=='string'||!idToken){estado.textContent='BA03G61_CREDENCIAL_NO_RECIBIDA';return;}
+  ocupado=true;estado.textContent='Consultando D.2…';
+  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(ENDPOINT,{
+      method:'POST',credentials:'omit',redirect:'follow',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({operacion:'DIAGNOSTICAR_IDENTIDAD_BA03_G61',idToken}),
+      signal:controller.signal
+    });
+    if(!response.ok)throw new Error('HTTP_NO_DISPONIBLE');
+    const data=await response.json();
+    if(data?.contrato!=='SIA-BA03-G61-DIAGNOSTICO-01'){
+      estado.textContent='BA03G61_VERSION_CENTRAL_NO_ACTUALIZADA';return;
+    }
+    if(data.escrituraRealizada!==false||data.recepcionConfirmada!==false){
+      estado.textContent='BA03G61_RESPUESTA_INCOMPATIBLE';return;
+    }
+    if(data.ok===true&&data.motivo==='BA03G61_IDENTIDAD_D2_VALIDADA'){
+      estado.textContent='BA03G61_IDENTIDAD_D2_VALIDADA';return;
+    }
+    estado.textContent='BA03G61_RECHAZADA: '+String(data.motivo||'SIN_MOTIVO');
+  }catch(_){estado.textContent='BA03G61_CONSULTA_NO_COMPLETADA';}
+  finally{clearTimeout(timeout);ocupado=false;}
+}
+function inicio(){
+  if(!window.google?.accounts?.id){estado.textContent='BA03G61_GOOGLE_NO_DISPONIBLE';return;}
+  google.accounts.id.initialize({client_id:CLIENT_ID,callback:verificar,auto_select:false});
+  google.accounts.id.renderButton(document.getElementById('googleButton'),{theme:'outline',size:'large',text:'signin_with',width:250});
+  estado.textContent='Selecciona tu cuenta institucional.';
+}
+window.addEventListener('load',inicio);
+</script>
+</body></html>
