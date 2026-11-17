@@ -33,7 +33,10 @@
     }
   }
 
-  let activo = false;
+  
+let activo = false;
+let secuencia = 0;
+
 
   function agregarAccion(contenedor, registro, usuarioId) {
     if (
@@ -116,7 +119,7 @@
         mensaje.textContent = "Autenticación Google o envío no disponible.";
         return;
       }
-
+      const intento = ++secuencia;
       activo = true;
       fase = "esperando";
       const numero = ++intento;
@@ -133,6 +136,10 @@
           auto_select: false,
           callback: async credencial => {
             // Ignora credenciales tardías de intentos cancelados.
+            
+            if (intento !== secuencia || !activo) {
+              return;
+            }
             if (numero !== intento || fase !== "esperando") return;
             const token = credencial && credencial.credential;
             if (typeof token !== "string" || !token || sesion() !== usuarioId) {
@@ -146,6 +153,7 @@
             cancelar.hidden = true;
             zonaGoogle.replaceChildren();
             zonaGoogle.hidden = true;
+            cancelar.disabled = true;
             mensaje.textContent = "Verificando recepción institucional...";
             try {
               const resultado = await control.enviar(registro.id, async () => token);
@@ -178,6 +186,34 @@
           size: "large",
           text: "signin_with"
         });
+        
+const cancelar = document.createElement("button");
+
+cancelar.type = "button";
+cancelar.className = "secondary-button";
+cancelar.textContent = "Cancelar verificación";
+
+zonaGoogle.appendChild(cancelar);
+
+cancelar.addEventListener("click", () => {
+  if (intento !== secuencia || !activo ||
+      cancelar.disabled) {
+    return;
+  }
+
+  secuencia++;
+  activo = false;
+  boton.disabled = false;
+
+  zonaGoogle.replaceChildren();
+  zonaGoogle.hidden = true;
+
+  mensaje.textContent =
+    "Verificación cancelada. No se ha " +
+    "solicitado un nuevo envío desde " +
+    "esta verificación.";
+});
+
       } catch (_) {
         cerrarEspera("No fue posible abrir la verificación Google. No se inició el envío.");
       }
