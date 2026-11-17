@@ -30,7 +30,7 @@
         i.verificadoEn === p.verificadoEn &&
         i.modulo === "BIENESTAR_ANIMAL" &&
         p.permisos &&
-        p.permisos.SINCRONIZAR === false &&
+        typeof p.permisos.SINCRONIZAR === "boolean" &&
         typeof root.usuarioListado05G16B === "function" &&
         root.usuarioListado05G16B() === i.usuarioId
         ? i.usuarioId : null;
