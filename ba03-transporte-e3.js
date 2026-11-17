@@ -13,6 +13,35 @@
   // Debe permanecer false hasta comprobar escritura real, autorización,
   // despliegue web y confirmación institucional de extremo a extremo.
   const BA03_E3_ENVIO_HABILITADO = false;
+  
+/**
+ * BA-03.F.6
+ * Restricción adicional del piloto en banimApp.
+ * La autorización definitiva permanece en el servidor.
+ */
+const BA03_E3_UUID_PILOTO =
+  "7fbb0fcf-bf30-4e3b-ac18-80fab5b0b002";
+
+function siaBA03E3EsPiloto_(registro) {
+  if (
+    !registro ||
+    typeof registro !== "object" ||
+    Array.isArray(registro)
+  ) {
+    return false;
+  }
+
+  const uuid = BA03_E3_UUID_PILOTO;
+
+  return (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{4}-[0-9a-f]{8}$/i
+      .test(uuid) &&
+    registro.id === uuid &&
+    registro.operacion_id ===
+      "P04-" + uuid.replace(/-/g, "")
+  );
+}
+
   const OPERACION = "ENVIAR_REGISTRO_BANIMAPP";
   const URL_CENTRAL =
     "https://script.google.com/macros/s/AKfycbx8xZx31rH7LERYaSrwv6NzdNHjVKP0-AH_y6WZGSrp3IeOekC6JbgEFx-K4S0Ywg77/exec";
@@ -69,6 +98,14 @@
         recepcionConfirmada: false
       };
     }
+    
+if (!siaBA03E3EsPiloto_(borrador)) {
+  return {
+    ok: false,
+    motivo: "REGISTRO_FUERA_DEL_PILOTO",
+    recepcionConfirmada: false
+  };
+}
 
     if (typeof obtenerToken !== "function") {
       return {
