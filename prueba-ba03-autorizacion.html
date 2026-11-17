@@ -6,11 +6,14 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>SIA — Diagnóstico BA-03</title>
+
+  <title>SIA — Autorización BA-03.G.5.4</title>
+
   <script
     src="https://accounts.google.com/gsi/client"
     async defer>
   </script>
+
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -18,6 +21,7 @@
       color: #193e32;
       padding: 24px;
     }
+
     main {
       max-width: 480px;
       margin: 30px auto;
@@ -25,11 +29,13 @@
       padding: 24px;
       border-radius: 16px;
     }
+
     #googleButton {
       display: flex;
       justify-content: center;
       margin: 20px 0;
     }
+
     #estado {
       padding: 16px;
       background: #e9f0eb;
@@ -38,16 +44,28 @@
     }
   </style>
 </head>
+
 <body>
+
 <main>
-  <h2>SIA — Prueba BA-03.B.5</h2>
+  <h2>SIA — Bienestar Animal</h2>
+
+  <h3>BA-03.G.5.4</h3>
+
   <p>
-    Verificación institucional de autorización
-    de envío. No transmite registros.
+    Validación de autorización institucional
+    de envío mediante Google.
+  </p>
+
+  <p>
+    Esta prueba no envía formularios
+    ni escribe registros.
   </p>
 
   <div id="googleButton"></div>
-  <div id="estado" role="status"
+
+  <div id="estado"
+       role="status"
        aria-live="polite">
     Preparando autenticación...
   </div>
@@ -60,32 +78,46 @@ const CLIENT_ID =
   "539376159794-mp0qjge29fhkudf2tdp9cu8knfq3qhlv.apps.googleusercontent.com";
 
 const ENDPOINT =
-  "https://script.google.com/macros/s/AKfycbx8xZx31rH7LERYaSrwv6NzdNHjVKP0-AH_y6WZGSrp3IeOekC6JbgEFx-K4S0Ywg77/exec";
+  "https://script.google.com/macros/s/" +
+  "AKfycbx8xZx31rH7LERYaSrwv6NzdNHjVKP0-" +
+  "AH_y6WZGSrp3IeOekC6JbgEFx-K4S0Ywg77/exec";
 
-const estado = document.getElementById("estado");
+const estado =
+  document.getElementById("estado");
+
 let ocupado = false;
 
 async function verificar(respuestaGoogle) {
+
   if (ocupado) return;
 
-  const idToken = respuestaGoogle?.credential;
+  const idToken =
+    respuestaGoogle &&
+    respuestaGoogle.credential;
 
-  if (typeof idToken !== "string" || !idToken) {
+  if (
+    typeof idToken !== "string" ||
+    !idToken
+  ) {
     estado.textContent =
-      "Google no entregó una credencial.";
+      "BA03G54_CREDENCIAL_NO_RECIBIDA";
     return;
   }
 
   ocupado = true;
+
   estado.textContent =
-    "Consultando autorización institucional...";
+    "Verificando autorización institucional...";
 
   const controlador = new AbortController();
+
   const limite = setTimeout(
-    () => controlador.abort(), 12000
+    () => controlador.abort(),
+    15000
   );
 
   try {
+
     const respuesta = await fetch(ENDPOINT, {
       method: "POST",
       credentials: "omit",
@@ -106,56 +138,53 @@ async function verificar(respuestaGoogle) {
 
     const datos = await respuesta.json();
 
-    if (
-      datos.contrato !==
-        "SIA-BA03-AUTORIZACION-01" ||
-      datos.modulo !== "BIENESTAR_ANIMAL" ||
-      datos.accion !== "ENVIAR_REGISTROS"
-    ) {
+    const contratoValido = Boolean(
+      datos &&
+      datos.contrato ===
+        "SIA-BA03-AUTORIZACION-01" &&
+      datos.modulo === "BIENESTAR_ANIMAL" &&
+      datos.accion === "ENVIAR_REGISTROS"
+    );
+
+    if (!contratoValido) {
       estado.textContent =
-        "BA03: RESPUESTA_INCOMPATIBLE";
+        "BA03G54_CONTRATO_INCOMPATIBLE";
+      return;
+    }
+
+    const autorizado = Boolean(
+      datos.ok === true &&
+      datos.permitido === true &&
+      datos.motivo === "AUTORIZADO" &&
+      typeof datos.usuarioId === "string" &&
+      datos.usuarioId.trim() &&
+      typeof datos.idUsuarioBA === "string" &&
+      datos.idUsuarioBA.trim()
+    );
+
+    if (autorizado) {
+      estado.textContent =
+        "BA03G54_AUTORIZACION_POSITIVA_VALIDADA";
       return;
     }
 
     if (
       datos.ok === false &&
-      datos.permitido === false &&
-      datos.motivo === "ENVIO_NO_AUTORIZADO"
+      datos.permitido === false
     ) {
       estado.textContent =
-        "BA03: PERMISO_DESACTIVADO_CONFIRMADO";
+        "BA03G54_AUTORIZACION_DENEGADA";
       return;
     }
-
-    if (
-      datos.ok === true &&
-      datos.permitido === true
-    ) {
-      estado.textContent =
-        "BA03: AUTORIZACION_INESPERADA";
-      return;
-    }
-
-    const motivosPermitidos = [
-      "ACCESO_NO_AUTORIZADO",
-      "CONSULTA_RECHAZADA",
-      "VINCULACION_INVALIDA",
-      "USUARIO_NO_VINCULADO",
-      "PERMISO_NO_DISPONIBLE",
-      "PERMISO_VENCIDO",
-      "IDENTIDAD_NO_VERIFICADA"
-    ];
 
     estado.textContent =
-      "BA03: " + (
-        motivosPermitidos.includes(datos.motivo)
-          ? datos.motivo
-          : "RECHAZO_NO_CLASIFICADO"
-      );
+      "BA03G54_RESPUESTA_INCONSISTENTE";
 
   } catch (_) {
+
     estado.textContent =
-      "BA03: CONSULTA_HTTP_NO_COMPLETADA";
+      "BA03G54_CONSULTA_NO_COMPLETADA";
+
   } finally {
     clearTimeout(limite);
     ocupado = false;
@@ -163,9 +192,14 @@ async function verificar(respuestaGoogle) {
 }
 
 function iniciarGoogle() {
-  if (!window.google?.accounts?.id) {
+
+  if (
+    !window.google ||
+    !google.accounts ||
+    !google.accounts.id
+  ) {
     estado.textContent =
-      "No se pudo inicializar Google.";
+      "BA03G54_GOOGLE_NO_DISPONIBLE";
     return;
   }
 
@@ -189,7 +223,11 @@ function iniciarGoogle() {
     "Selecciona tu cuenta institucional.";
 }
 
-window.addEventListener("load", iniciarGoogle);
+window.addEventListener(
+  "load",
+  iniciarGoogle
+);
 </script>
+
 </body>
 </html>
