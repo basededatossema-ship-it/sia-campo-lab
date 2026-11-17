@@ -34,7 +34,7 @@ function siaBA03E3EsPiloto_(registro) {
   const uuid = BA03_E3_UUID_PILOTO;
 
   return (
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{4}-[0-9a-f]{8}$/i
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
       .test(uuid) &&
     registro.id === uuid &&
     registro.operacion_id ===
