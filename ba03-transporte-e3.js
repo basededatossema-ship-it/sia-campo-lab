@@ -199,11 +199,14 @@ if (!siaBA03E3EsPiloto_(borrador)) {
     };
   }
 
-  root.SIABA03TransporteE3 = Object.freeze({
-    envioHabilitado: BA03_E3_ENVIO_HABILITADO,
-    prepararSolicitud,
-    enviarBorrador
-  });
+  
+root.SIABA03TransporteE3 = Object.freeze({
+  envioHabilitado: BA03_E3_ENVIO_HABILITADO,
+  esPiloto: siaBA03E3EsPiloto_,
+  prepararSolicitud,
+  enviarBorrador
+});
+
 
 })(
   typeof globalThis !== "undefined"
