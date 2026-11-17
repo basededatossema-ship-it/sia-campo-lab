@@ -1349,6 +1349,23 @@ if (
       window.SIABanimBA02.agregarAccion(elemento, registro, usuarioId);
     }
 
+      
+/**
+ * BA-03.E.5
+ * Acción institucional de envío.
+ *
+ * El botón permanece deshabilitado
+ * mientras E.3 mantenga el bloqueo.
+ */
+if (window.SIABA03GoogleE5) {
+  window.SIABA03GoogleE5.agregarAccion(
+    elemento,
+    registro,
+    usuarioId
+  );
+}
+
+
     contenedor.appendChild(elemento);
   }
 }
