@@ -52,7 +52,7 @@
         p.CAPTURA_LOCAL !== true ||
         p.ESCRIBIR !== false ||
         p.ADMINISTRAR !== false ||
-        p.SINCRONIZAR !== false ||
+        typeof p.SINCRONIZAR !== "boolean" ||
         typeof root.usuarioListado05G16B !== "function" ||
         root.usuarioListado05G16B() !== id
       ) {
