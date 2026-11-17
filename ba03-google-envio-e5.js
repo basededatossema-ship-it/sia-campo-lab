@@ -61,8 +61,14 @@
 
     const transporte = root.SIABA03TransporteE3;
 
-    const habilitado = !!transporte &&
-      transporte.envioHabilitado === true;
+    
+const habilitado = Boolean(
+  transporte &&
+  transporte.envioHabilitado === true &&
+  typeof transporte.esPiloto === "function" &&
+  transporte.esPiloto(registro)
+);
+
 
     boton.disabled = !habilitado;
     contenedor.appendChild(boton);
