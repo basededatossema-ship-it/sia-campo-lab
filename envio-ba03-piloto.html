@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>SIA | Identidad para envío piloto</title>
+  <style>
+    body { margin:0; padding:20px; background:#f3f7f4; color:#193e32; font-family:system-ui,sans-serif; }
+    main { max-width:490px; margin:20px auto; background:#fff; padding:24px; border:1px solid #dbe6de; border-radius:16px; }
+    h1 { font-size:24px; line-height:1.2; }
+    #googleButton { display:flex; justify-content:center; min-height:44px; margin:22px 0; }
+    #estado { white-space:pre-wrap; overflow-wrap:anywhere; background:#e9f0eb; padding:16px; border-radius:10px; }
+    .nota { color:#576d61; }
+    a { color:#12694f; }
+  </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="./contrato-ba.js" defer></script>
+  <script src="./ba03-confirmacion-e2.js?v=BA03-E2-1" defer></script>
+  <script src="./ba03-transporte-e3.js?v=BA03-F15-1" defer></script>
+  <script src="./ba03-control-envio-e4.js?v=BA03-E4-1" defer></script>
+</head>
+<body>
+<main>
+  <h1>Confirmación Google · Piloto BA-03</h1>
+  <p class="nota">Esta etapa solo comprueba la devolución de la credencial de Google. No enviará registros ni modificará borradores.</p>
+  <div id="googleButton"></div>
+  <p id="estado" role="status" aria-live="polite">Verificando sesión institucional...</p>
+  <p><a href="./index.html">Volver a banimApp</a></p>
+</main>
+<script>
+(function () {
+  'use strict';
+  const CLIENT_ID =
+    '539376159794-mp0qjge29fhkudf2tdp9cu8knfq3qhlv.apps.googleusercontent.com';
+  const PILOTO_UUID = '7fbb0fcf-bf30-4e3b-ac18-80fab5b0b002';
+  // Bloqueo autónomo: no depende del estado de E.3.
+  const F15_ENVIO_REAL_HABILITADO = false;
+  const estado = document.getElementById('estado');
+  let procesando = false;
+
+  function usuarioListado05G16B() {
+    try {
+      const i = JSON.parse(sessionStorage.getItem('SIA_BA_IDENTIDAD_05G14') || 'null');
+      const r = JSON.parse(localStorage.getItem('SIA_BA_IDENTIDAD_OFFLINE_05G15') || 'null');
+      const fecha = Date.parse(r && r.verificadoEn);
+      const edad = Date.now() - fecha;
+      if (!i || !r || typeof i.usuarioId !== 'string' || !i.usuarioId.trim() ||
+          typeof i.nombreCompleto !== 'string' || !i.nombreCompleto.trim() ||
+          i.modulo !== 'BIENESTAR_ANIMAL' || i.permiso !== 'LEER' ||
+          r.modulo !== 'BIENESTAR_ANIMAL' || r.permiso !== 'LEER' ||
+          i.usuarioId !== r.usuarioId ||
+          i.nombreCompleto !== r.nombreCompleto ||
+          i.verificadoEn !== r.verificadoEn ||
+          !Number.isFinite(fecha) || edad < 0 || edad > 72 * 60 * 60 * 1000) return null;
+      return i.usuarioId.trim();
+    } catch (_) { return null; }
+  }
+  // E.4 reutiliza este mismo contrato de identidad del panel principal.
+  window.usuarioListado05G16B = usuarioListado05G16B;
+
+  function sesionValida() {
+    try {
+      const id = usuarioListado05G16B();
+      const i = JSON.parse(sessionStorage.getItem('SIA_BA_IDENTIDAD_05G14') || 'null');
+      const a = JSON.parse(sessionStorage.getItem('SIA_BA_ACCESO_GOOGLE_05G19A') || 'null');
+      const p = JSON.parse(sessionStorage.getItem('SIA_BA_PERMISOS_05G21I') || 'null');
+      const permisos = p && p.permisos;
+      return Boolean(id && i && a && p && permisos &&
+        i.usuarioId === id && a.usuarioId === id && p.usuarioId === id &&
+        i.verificadoEn === a.verificadoEn && i.verificadoEn === p.verificadoEn &&
+        p.contrato === 'SIA-PERMISOS-BA-01' &&
+        permisos.CONSULTAR === true && permisos.CAPTURA_LOCAL === true &&
+        permisos.ESCRIBIR === false && permisos.ADMINISTRAR === false &&
+        typeof permisos.SINCRONIZAR === 'boolean');
+    } catch (_) { return false; }
+  }
+
+  async function recibirCredencial(respuesta) {
+    if (procesando) return;
+    procesando = true;
+    const token = respuesta && respuesta.credential;
+    if (!sesionValida() || typeof token !== 'string' || !token) {
+      estado.textContent = 'BA03F15_IDENTIDAD_NO_VERIFICADA. Ningún envío iniciado.';
+      procesando = false;
+      return;
+    }
+
+    if (!F15_ENVIO_REAL_HABILITADO) {
+      // No guardar, transmitir, mostrar ni registrar el token.
+      estado.textContent = 'BA03F15_CALLBACK_GOOGLE_RECIBIDO. Sin envío ni escritura.';
+      document.getElementById('googleButton').replaceChildren();
+      return;
+    }
+
+    // Esta rama permanece inalcanzable en F.15 de diagnóstico.
+    estado.textContent = 'Verificando recepción institucional...';
+    try {
+      const control = window.SIABA03ControlE4;
+      if (!control || typeof control.enviar !== 'function')
+        throw new Error('CONTROL_NO_DISPONIBLE');
+      const resultado = await control.enviar(PILOTO_UUID, async () => token);
+      estado.textContent = resultado && resultado.ok === true
+        ? 'BA03F15_RECEPCION_CONFIRMADA'
+        : 'BA03F15_ENVIO_NO_CONFIRMADO: ' +
+          String((resultado && resultado.motivo) || 'ERROR') +
+          '. Revisar BA_OPERACIONES_ENVIO antes de repetir.';
+    } catch (_) {
+      estado.textContent =
+        'BA03F15_RESULTADO_INDETERMINADO. Revisar BA_OPERACIONES_ENVIO antes de repetir.';
+    }
+  }
+
+  window.addEventListener('load', () => {
+    if (!sesionValida()) {
+      estado.textContent = 'BA03F15_SESION_NO_VALIDA. Regresa al acceso institucional.';
+      return;
+    }
+    if (!window.SIABA03TransporteE3 ||
+        typeof window.SIABA03TransporteE3.esPiloto !== 'function' ||
+        !window.SIABA03TransporteE3.esPiloto({
+          id: PILOTO_UUID,
+          operacion_id: 'P04-' + PILOTO_UUID.replace(/-/g, '')
+        })) {
+      estado.textContent = 'BA03F15_PILOTO_NO_CONFIGURADO.';
+      return;
+    }
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      estado.textContent = 'BA03F15_GOOGLE_NO_DISPONIBLE.';
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: recibirCredencial,
+      ux_mode: 'popup',
+      auto_select: false
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleButton'),
+      { theme: 'outline', size: 'large', text: 'signin_with', width: 260 }
+    );
+    estado.textContent = 'Selecciona la cuenta Google institucional. No se enviarán formularios.';
+  });
+})();
+</script>
+</body>
+</html>
