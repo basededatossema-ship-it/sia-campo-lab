@@ -180,13 +180,47 @@ if (!siaBA03E3EsPiloto_(borrador)) {
         respuesta
       );
 
-    if (!verificada.confirmada) {
-      return {
-        ok: false,
-        motivo: "RECEPCION_NO_CONFIRMADA",
-        recepcionConfirmada: false
-      };
-    }
+    
+/**
+ * BA-03.F.17
+ * Diagnóstico controlado de rechazo institucional.
+ * No muestra tokens, datos personales ni
+ * estructuras internas del Servicio Central.
+ */
+if (!verificada.confirmada) {
+
+  const motivosAdmitidos = new Set([
+    "SOLICITUD_INVALIDA",
+    "ENVIO_DESHABILITADO",
+    "PILOTO_NO_CONFIGURADO",
+    "OPERACION_NO_AUTORIZADA",
+    "ENVIO_NO_AUTORIZADO",
+    "ENVIO_NO_CONFIRMADO"
+  ]);
+
+  const contratoValido = Boolean(
+    respuesta &&
+    typeof respuesta === "object" &&
+    !Array.isArray(respuesta) &&
+    respuesta.contrato === "SIA-BA03-E1-01" &&
+    respuesta.ok === false &&
+    respuesta.recepcionConfirmada === false
+  );
+
+  const motivo =
+    contratoValido &&
+    typeof respuesta.motivo === "string" &&
+    motivosAdmitidos.has(respuesta.motivo)
+      ? respuesta.motivo
+      : "RECEPCION_NO_CONFIRMADA";
+
+  return {
+    ok: false,
+    motivo,
+    recepcionConfirmada: false
+  };
+}
+
 
     // El componente NO marca ni elimina borradores.
     // Esa transición requerirá una transacción
