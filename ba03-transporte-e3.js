@@ -12,7 +12,7 @@
 
   // Debe permanecer false hasta comprobar escritura real, autorización,
   // despliegue web y confirmación institucional de extremo a extremo.
-  const BA03_E3_ENVIO_HABILITADO = true;
+  const BA03_E3_ENVIO_HABILITADO = false;
   
 /**
  * BA-03.F.6
